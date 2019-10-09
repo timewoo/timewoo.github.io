@@ -22,5 +22,5 @@ systemctl start docker    启动docker
 docker run hello-world
 
 出现以下命令表示docker启动成功
-![Demo](images/docker-mysql1.png)
+![timewoo](https://timewoo.github.io/images/docker-mysql1.png)
 ```
