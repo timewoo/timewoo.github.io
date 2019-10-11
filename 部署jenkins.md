@@ -29,7 +29,7 @@ docker run -p 8002:8080 -p 50000:50000 \
 查看容器日志获取初始登录密码
 ![timewoo](https://timewoo.github.io/images/jenkins3.png)
 
-登录成功选择jenkins插件安装方式，默认选择第一种
+###登录成功选择jenkins插件安装方式，默认选择第一种
 ![timewoo](https://timewoo.github.io/images/jenkins4.png)
 
 由于jenkins默认使用国外的镜像源下载，速度很慢，所以更改数据源之后在下载相关插件
@@ -42,3 +42,7 @@ docker run -p 8002:8080 -p 50000:50000 \
 ![timewoo](https://timewoo.github.io/images/jenkins7.png)
 ![timewoo](https://timewoo.github.io/images/jenkins8.png)
 推荐镜像源为https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
+
+由于需要实现jenkins实现自动化部署的功能，所以需要下载gitlab和ssh插件(已安装则跳过此步骤)，在插件管理里面搜索插件名，下载安装完成即可
+
+###由于搭建gitlab需要4g内存，本机虚拟机无法满足要求，故不自己搭建gitlab。
