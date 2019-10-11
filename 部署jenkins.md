@@ -3,13 +3,13 @@
 
 ### 部署jenkins
 ```
-###docker拉取jenkins镜像
+### docker拉取jenkins镜像
 docker pull jenkins/jenkins
 
-###创建挂载目录
+### 创建挂载目录
 mkdir -p /home/data/jenkins
 
-###给挂载目录赋权限
+### 给挂载目录赋权限
 chown -R 1000:1000 /home/data/jenkins
 ```
 如果没有设置挂载目录的权限，启动jenkins会出现下面错误
@@ -17,7 +17,7 @@ chown -R 1000:1000 /home/data/jenkins
 因为外部挂载目录的用户是root，设置挂载目录之后访问/var/jenkins_home的拥有者变成了root，导致jenkins容器操作/var/jenkins_home没有权限，解决办法就是把挂载目录同时赋权给jenkins容器，jenkins容器的uid是1000。
 
 ```
-###启动jenkins
+### 启动jenkins
 docker run -p 8002:8080 -p 50000:50000 \
 	-v /home/data/jenkins/:/var/jenkins_home \
 	--name jenkins -e JAVA_OPTS=-Duser.timezone=Asia/Shanghai --privileged=true --restart=always -d jenkins
@@ -29,7 +29,7 @@ docker run -p 8002:8080 -p 50000:50000 \
 查看容器日志获取初始登录密码
 ![timewoo](https://timewoo.github.io/images/jenkins3.png)
 
-###登录成功选择jenkins插件安装方式，默认选择第一种
+### 登录成功选择jenkins插件安装方式，默认选择第一种
 ![timewoo](https://timewoo.github.io/images/jenkins4.png)
 
 由于jenkins默认使用国外的镜像源下载，速度很慢，所以更改数据源之后在下载相关插件
