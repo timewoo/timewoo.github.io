@@ -75,3 +75,11 @@ Kafka：Kafka的follower正在同步leader数据时，leader所在的服务器�
 RabbitMQ：关闭MQ的自动ack机制，通过在程序中确保消息处理成功之后发送ack，超时就会将消息发送给其他的消费者消费，消息就不会丢失。
 
 Kafka：和RabbitMQ类似，关闭自动提交offset，这样在处理过程完成后才提交offset，确保数据不会丢失，但是还有一种情况，就是处理完成提交offset之前就宕机，这样还是会出现重复消费的情况，所以需要保证幂等性。
+
+### 消息队列的顺序
+#### 适用场景：mysql同步数据将binlog的日志发送到MQ，MQ依次消费，必须保证数据的操作顺序。
+RabbitMQ：拆分多个 queue，每个 queue 一个 consumer，就是多一些 queue 而已，确实是麻烦点；或者就一个 queue 但是对应一个 consumer，然后这个 consumer 内部用内存队列做排队，然后分发给底层不同的 worker 来处理。
+![timewoo](https://timewoo.github.io/images/MQ2.png)
+
+Kafka：1.一个 topic，一个 partition，一个 consumer，内部单线程消费，单线程吞吐量太低，一般不会用这个。2.写 N 个内存 queue，具有相同 key 的数据都到同一个内存 queue；然后对于 N 个线程，每个线程分别消费一个内存 queue 即可，这样就能保证顺序性。
+![timewoo](https://timewoo.github.io/images/MQ3.png)
