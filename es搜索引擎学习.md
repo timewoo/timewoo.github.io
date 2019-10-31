@@ -1,0 +1,25 @@
+## elasticsearch（es）
+记录学习elasticsearch的笔记，基本资料来源于https://github.com/doocs/advanced-java ，推荐阅读
+
+### elasticsearch架构
+设计理念是分布式搜索引擎，底层基于lucene，分布式架构，es中存储的基本单位是索引，所有类型相同的数据都会写到这个索引中，一个索引相当于mysql里的一张表。一个index下默认一个type，type指的是映射类型，指的是具有相同类型的数据存储，但是可能存在一个index下存在多个type的情况(在elasticsearch7.X中type完全移除，移除原因是由于同一个index下多个type中名称相同的字段是由同一个lucene来支持，意味着同一个字段的类型必须相同，在此之上需要考虑一点，如果同一个索引中存储的各个实体如果只有很少或者根本没有同样的字段，这种情况会导致稀疏数据，并且会影响到Lucene的高效压缩数据的能力),一个document就代表一条数据，field就代表document中的字段。同时支持分布式存储，索引可以拆分成多个shard，每个shard存储部分数据，支持横向扩展和提升性能。具备高可用，shard有数据备份，写入primary shard，replica shard同步数据。es集群拥有多个节点，master节点处理管理事件，比如维护索引元数据，切换primary shard和replica shard的身份等。master节点宕机后会重新选举一个master节点，如果非master节点宕机，如果该节点上有primary shard，master节点会将该节点上的primary shard对应的replica shard提升为primary shard，让集群能够正常工作，在服务器恢复之后，该服务器上原来的primary shard会变为replica shard，同步宕机过程缺失的数据。具有高可用和分布式的特性。
+
+### elasticsearch数据的处理原理
+
+1.es写入数据
+客户端选择一个node发送请求，该node就是coordinating node（协调节点），该节点对document进行路由，将该节点转发给对应的node，该node上的primary shard对数据进行处理，同时同步到replica shard节点，coordinating node如果发现primary shard和所有的replica shard都同步完成，就会返回响应结果给客户端。
+
+2.es读取数据
+主要是根据数据的doc id来查询，客户端发送请求到任意node(coordinating node),coordinating node将doc id进行哈希路由，把请求转发到对应的node，此时会使用round-robin随机轮询算法，会在primary shard和replica shard中随机选择一个，让读请求负载均衡，接受请求的node返回document给coordinate node，coordinate node在将document给客户端。
+
+3.es检索数据
+客户端将请求发送到coordinating node，node将搜索结果转发到所有的shard，将所有结果（doc id）返回给node，node节点将数据进行合并、排序、分页等操作，然后node根据doc id去各个节点上拉取实际的document数据，最终返回给客户端。
+
+4.写入数据原理
+先将数据写入内存buffer(这时候是搜索不到数据的)，同时将数据写入到translog日志文件。如果这时候buffer快满了或者到了一定时间，就会将buffer的数据refresh到一个新的segment file(磁盘文件)中，但是此时数据并不是直接写入segment file，而是写入到no cache(操作系统缓存),每隔1秒钟，es将buffer中的数据写入到新的segment file，在写入no cache时数据就可以被搜索到，es被称为near real-time(NRT,准实时)，是指数据在写入之后1秒才能被搜索到，同时可以通过restful api和Java api手动refresh数据，数据就可以实时搜索到。只要数据被refresh到no cache中，buffer就会被清空，因为数据已经被持久化到translog中，在这个过程中translog文件会越来越大，当到达一定大小之后就会触发commit操作，commit将buffer中的数据refresh到no cache中，同时清空buffer，然后将一个commit point写入磁盘文件，里面标识这个commit point对应的所有segment file，同时强行将no cache中的数据都fsync到磁盘文件，最后清空translog日志文件，重启一个translog，commit操作结束。这个操作就是flush。es默认30分钟自动执行一次flush，如果translog文件过大也会触发flush，同时也可以通过es api手动执行flush。如果没有translog日志文件，由于在执行commit操作之前，数据都是存放在buffer或no cache中，那么在服务器宕机之后，在内存中的数据就会全部丢失，所以就需要有对应的translog日志文件来将数据恢复到buffer和no cache中，保证数据不丢失。其实translog也是先写入no cache中，默认5秒刷新到磁盘文件中，所以会有可能丢失5秒的数据，也可以将translog设置成同步fsync，但是这样性能会差很多。所以一般为了性能，丢失5秒数据是可以接受的。
+
+5.删除更新操作原理
+删除操作在commit时会生成一个.del文件，里面会将某个doc标识为deleted状态，搜索时根据.del文件就会知道doc是否删除。如果是更新操作，就是将原来的doc标识为deleted状态，然后写入一条新的数据。由于buffer每隔1秒会刷新到segment file，这样文件会越来越多，此时就会定期执行merge，将多个segment file合并成一个，同时会将标识为deleted的doc给物理删除，然后将新的 segment file 写入磁盘，这里会写一个 commit point，标识所有新的 segment file，然后打开 segment file 供搜索使用，同时删除旧的 segment file。
+
+6.底层的lucene倒排索引
+lucene简单来说就是一个封装好的包含各种建立倒排索引的算法代码，倒排索引是指在对文档进行分词后提取关键词，对关键词和文档ID的映射即为倒排索引。用户可以输入关键词，通过倒排索引快速找到对应的文档ID,从而找到文档。倒排索引中的所有词项对应一个或多个文档；倒排索引中的词项根据字典顺序升序排列
