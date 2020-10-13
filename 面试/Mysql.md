@@ -111,7 +111,7 @@ mysql中索引主要有两种，哈希索引和BTree索引，哈希索引底层�
 
 索引主要依靠mysql的存储格式，mysql存储数据的基本格式是页。
 
-![timewoo](https://timewoo.github.io/images/mysql.jpg)
+![timewoo](https://timewoo.github.io/images/mysql.png)
 
 ![timewoo](https://timewoo.github.io/images/mysql1.jpg)
 
