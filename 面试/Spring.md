@@ -2,8 +2,8 @@
 
 1.Spring框架：
 
-一般指的是spring Framework，是多模块的集合，模块是核心容器，数据访问/集成，Web，AOP(面向切面编程)，工具，消息和测试模块。比如Core Container
-中的core组件时Spring所有组件的核心，Beans组件和Context组件是实现IOC和依赖注入的基础，AOP组件用来实现面向切面编程。spring的6个特征是核心技术
+一般指的是Spring Framework，是多模块的集合，模块是核心容器，数据访问/集成，Web，AOP(面向切面编程)，工具，消息和测试模块。比如Core Container
+中的core组件是Spring所有组件的核心，Beans组件和Context组件是实现IOC和依赖注入的基础，AOP组件用来实现面向切面编程。spring的6个特征是核心技术
 (依赖注入DI，AOP，事件event，资源，i18n，验证，数据绑定，类型转换，SpEL)，测试(模拟对象，TestContext框架，Spring MVC测试，WebTestClient)，
 数据访问(事务，DAO支持，JDBC，ORM，编组XML)，Web支持(Spring MVC和Spring WebFlux Web框架)，集成(远程处理，JMS，JCA，JMX，电子邮件，任务，
 调度，缓存)，语言(Kotlin，Groovy，动态语言)。
@@ -96,7 +96,7 @@ public class client{
 }
 ```
 第三种是cglib代理，需要引入额外的三方库。cglib代理的对象不需要实现任何接口，cglib主要是通过继承原对象生成子类来实现代理，所以不能代理有final修饰的对象。
-Spring AOP是基于动态代理实现的，如果要代理的对象实现了接口则使用JDK的动态代理，没有则使用cglib代理。除了spring AOP外，还可以使用AspectJ框架在实现AOP，
+Spring AOP是基于动态代理实现的，如果要代理的对象实现了接口则使用JDK的动态代理，没有则使用cglib代理。除了Spring AOP外，还可以使用AspectJ框架在实现AOP，
 Spring AOP属于运行时增强，AspectJ属于编译时增强，Spring AOP是基于代理，AspectJ是基于字节码，Spring AOP已经集成AspectJ。
 
 3.spring bean：
@@ -135,6 +135,8 @@ BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处
 ![timewoo](https://timewoo.github.io/images/Bean.jpg)
 
 ![timewoo](https://timewoo.github.io/images/Bean2.jpg)
+
+Spring循环依赖问题：
 
 4.spring mvc：
 
