@@ -134,9 +134,53 @@ BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处
 
 ![timewoo](https://timewoo.github.io/images/Bean.jpg)
 
-![timewoo](https://timewoo.github.io/images/Bean2.jpg)
+![timewoo](https://timewoo.github.io/images/Bean1.jpg)
 
-Spring循环依赖问题：
+Spring循环依赖问题：Spring循环依赖是指Bean之间循环引用，多个bean之间互相持有对方，形成闭环。A依赖B，B依赖C，C依赖A等。
+```
+public A{
+    private B b;
+}
+public B{
+    private C c;
+}
+public C{
+    private A a;
+}
+```
+在Spring中Bean的注入有两种方式，构造器注入，属性注入，属性注入又分为单例和非单例，通过构造器注入的Bean在发生循环依赖时会抛出异常，可以通过在构造器中添加@Lazy来设置
+只有在调用时才会去真正的注入bean。Spring中通过构造器注入bean时，会维护一个正在创建的Bean池，存储的都是正在创建而未创建完成的bean，bean创建完成后就会从bean池中清除，
+当出现循环依赖时Spring会发现注入的bean出现在Bean池中，代表依赖的bean也在创建，就会抛出BeanCurrentlylnCreationException异常。当采用属性注入bean时，比如@setter，
+由于spring中bean是先实例化，再进行属性的设置，所以spring对属性注入的bean采用三级缓存的方式来存储bean对象用来解决循环依赖问题。
+```
+/**
+ * 一级缓存，存储的是完成初始化的bean
+ */
+private final Map<String, Object> singletonObjects = new ConcurrentHashMap<String, Object>(64);
+
+/**
+ * 二级缓存，存储的是完成实例化但是还未初始化的bean
+ */
+private final Map<String, Object> earlySingletonObjects = new HashMap<String, Object>(16);
+
+/**
+ * 三级缓存，存储的是进入实例化阶段的单例bean工厂
+ */
+private final Map<String, ObjectFactory> singletonFactories = new HashMap<String, ObjectFactory>(16);
+
+```
+spring对属性注入的bean先去一级缓存中获取，一级缓存没有就去二级缓存，二级缓存也没有就去三级缓存，比如A，B互相依赖，A在实例化时就会放入三级缓存中，在注入B时会去进行
+B的创建，B在实例化后也会放入三级缓存中，然后B设置A依赖时发现一级和二级缓存都没有，就去三级缓存中获取，就拿到了A已经实例化还未初始化的对象，然后将A从三级缓存放入二级缓存，
+并且删除三级缓存的A对象，B初始化完成后就将B对象放入一级缓存中，然后A在一级缓存中获取B对象，初始化完成后将A对象放入一级缓存中。其实我们可以看到，如果只使用两个缓存其实
+也是可以解决循环依赖问题(只缓存实例化和初始化的bean)，但是spring采用三级缓存目的是防止在AOP的情况下导致注入的bean不是单例，意思就是在AOP的情况下，A创建生成的应该是代理对象，
+即注入的应该是代理对象，但是A的代理对象是在bean创建完成后通过后置处理器生成的，如果只有二级缓存，B在获取A时拿到的是原始对象，A完成初始化后才生成代理对象，就违反了spring的设计，
+所以新增一个三级缓存，存储的是beanFactory，在获取三级缓存的对象时会调用后置处理器，这样拿到的就是代理对象。三级缓存主要是针对AOP下的bean注入。
+
+非单例bean在每次请求都会生成新的bean，无法使用三级缓存，所以无法解决循环依赖问题。
+
+spring注入的@Resource和@Autowired的区别:@Resource和@Autowired都可以用来注入bean，@Resource是javaEE自带的注解，可以设置根据bean的name或type去注入，
+默认是根据bean的名字注入，@Autowired是spring提供的注解，根据bean的type注入。在注入接口只有一个实现类时@Resource和@Autowired注入功能是类似的，但是如果注入
+接口有多个实现类时，@Resource可以设置name来指定注入那个实现类，@Autowired必须配合@Qualifier来指定注入实现类。
 
 4.spring mvc：
 
@@ -192,7 +236,7 @@ TransactionDefinition是事务定义的信息(事务隔离级别，传播行为�
 PlatformTransactionManager事务管理接口，Spring并不直接管理事务，而是提供多种事务管理器，通过这个接口，spring为各个平台都提供了对应的事务管理器，比如JDBC的DataSourceTransactionManager，
 Hibernate的HibernateTransactionManager，JPA的JpaTransactionManager。
 
-![timewoo](https://timewoo.github.io/images/transaction.jpg)
+![timewoo](https://timewoo.github.io/images/transaction.png)
 
 PlatformTransactionManager主要定义了三个方法
 ```
@@ -228,13 +272,12 @@ public interface TransactionDefinition {
 	int PROPAGATION_REQUIRED = 0;
 
 	/**
-	 * 是当前存在事务
-       则加入该事务，否则已非事务的方式运行
+	 *是当前存在事务，则加入该事务，否则已非事务的方式运行
 	 */
 	int PROPAGATION_SUPPORTS = 1;
 
 	/**
-	 * 是当前存在事务存在则加入该事务，否则抛出异常
+	 *是当前存在事务存在则加入该事务，否则抛出异常
 	 */
 	int PROPAGATION_MANDATORY = 2;
 
@@ -254,8 +297,7 @@ public interface TransactionDefinition {
 	int PROPAGATION_NEVER = 5;
 
 	/**
-	 * 是指当前存在事务则创建一个新事务作为当前事务
-       的嵌套事务运行，否则就和TransactionDefinition.PROPAGATION_REQUIRED行为一样
+	 * 是指当前存在事务则创建一个新事务作为当前事务的嵌套事务运行，否则就和TransactionDefinition.PROPAGATION_REQUIRED行为一样
 	 */
 	int PROPAGATION_NESTED = 6;
 
@@ -364,6 +406,7 @@ public interface TransactionExecution {
 	boolean isCompleted();
 
 }
+public interface SavepointManager{
 	/**
 	 * 创建一个新的保存点
 	 */
