@@ -7,9 +7,10 @@
 移除原因是由于同一个index下多个type中名称相同的字段是由同一个lucene来支持，意味着同一个字段的类型必须相同，在此之上需要考虑一点，
 如果同一个索引中存储的各个实体如果只有很少或者根本没有同样的字段，这种情况会导致稀疏数据，并且会影响到Lucene的高效压缩数据的能力),一个document就代表一条数据，
 field就代表document中的字段。同时支持分布式存储，索引可以拆分成多个shard，每个shard存储部分数据，支持横向扩展和提升性能。具备高可用，shard有数据备份，
-写入primary shard，replica shard同步数据。es集群拥有多个节点，master节点处理管理事件，比如维护索引元数据，切换primary shard和replica shard的身份等。
-master节点宕机后会重新选举一个master节点，如果非master节点宕机，如果该节点上有primary shard，master节点会将该节点上的primary shard对应的replica shard提升为primary shard，
-让集群能够正常工作，在服务器恢复之后，该服务器上原来的primary shard会变为replica shard，同步宕机过程缺失的数据。具有高可用和分布式的特性。
+写入primary shard，replica shard同步数据。多个shard存储不同数据是分布式，每个shard有primary shard和replica shard备份是高可用。es集群拥有多个节点，
+master节点处理管理事件，比如维护索引元数据，切换primary shard和replica shard的身份等。master节点宕机后会重新选举一个master节点，如果非master节点宕机，
+如果该节点上有primary shard，master节点会将该节点上的primary shard对应的replica shard提升为primary shard，让集群能够正常工作，在服务器恢复之后，
+该服务器上原来的primary shard会变为replica shard，同步宕机过程缺失的数据。具有高可用和分布式的特性。
 
 ### elasticsearch数据的处理原理
 
@@ -49,7 +50,7 @@ lucene简单来说就是一个封装好的包含各种建立倒排索引的算�
 通过倒排索引快速找到对应的文档ID,从而找到文档。倒排索引中的所有词项对应一个或多个文档；倒排索引中的词项根据字典顺序升序排列。
 
 ### es查询效率
-es搜索效率依赖于底层的filesystem cache，因为es在写入数据时，数据都存储在磁盘文件中，查询时，如果filesystem cache中没有，会到系统会把数据自动缓存到filesystem cache中，
+es搜索效率依赖于底层的filesystem cache，因为es在写入数据时，数据都存储在磁盘文件中，查询时，如果filesystem cache中没有，系统会把数据自动缓存到filesystem cache中，
 如果filesystem cache足够多，能够容纳es的索引数据文件，那搜索时就会走内存，性能会非常高。所以为了提高es的搜索效率，最好让机器的内存能够容纳数据的一半，
 这要一半的数据都会在内存中搜索。而且最好不要在es中存储所有的数据，这样会挤占内存的空间，最好只在es中存储索引，即数据的标识，然后将完整数据存储在mysql或hbase，
 推荐使用hbase，通过es搜索到的doc id，在将完整的数据查出来，这样就提升了es的搜索效率。如果数据量确实足够大，filesystem cache内存不够，还可以采用数据预热的方式，
