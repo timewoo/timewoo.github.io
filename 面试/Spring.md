@@ -11,7 +11,7 @@
 2.Spring IOC和AOP：
 
 IOC(Inverse of control，控制反转)是一种设计思想，就是将程序手动创建对象的控制权交给Spring框架来管理，IOC在其他语言中也有，IOC容器是Spring用来实现IOC的载体，
-IOC容器实际上就是一个存放各种对象的Map。将对象之间的依赖关系交给IOC来管理，并且由IOC容器来完成对象的注入，可见简化开发的过程，IOC容器类似一个工厂，当要获取对象
+IOC容器实际上就是一个存放各种对象的Map。将对象之间的依赖关系交给IOC来管理，并且由IOC容器来完成对象的注入，可以简化开发的过程，IOC容器类似一个工厂，当要获取对象
 时，只需要配置文件或注解即可，不用考虑对象是如何创建的，比如最常用的用@Service注解的实现类，调用时不需要直接new实现类，直接注入实现类的接口即可使用，这样就不需要
 考虑具体的实现类，全部交给IOC容器即可。IOC在spring中具体的实现是DI，即依赖注入。IOC的初始化过程是读取XML文件形成resource资源，然后解析resource生成BeanDefinition
 即各种Bean的信息，比如指向类，是否单例，是否懒加载，bean之间的依赖关系等等。最后将BeanDefinition注册到BeanFactory中，形成IOC容器。
@@ -213,7 +213,7 @@ Handler，即Controller控制器后，开始由HandlerAdapter适配器处理。H
 
 适配器模式：Spring AOP的增强获取通知使用适配器模式，Spring MVC也用到了适配器模式的Controller。
 
-6.Spring 事务：
+6.Spring事务：
 
 spring管理事务的有两种，编程式事务和声明式事务，编程式事务是在代码里硬编码，声明式事务在配置文件中配置。主要推荐使用声明式事务，声明式事务又分为基于XML和注解两种。
 
@@ -439,6 +439,30 @@ TransactionDefinition.PROPAGATION_REQUIRES_NEWS下内外事务独立，事务的
 TransactionDefinition.PROPAGATION_NEVER下的都不是事务方法，不会回滚。事务默认只有在RuntimeException时才会回滚，Error也会导致事务回滚，但是在检查型(Checked)异常
 时不会回滚，可以通过rollbackFor来指定回滚的异常。事务主要是根据AOP来实现，生成事务方法的代理类。事务方法类实现了接口则采用jdk动态代理，没有的话采用CGLIB动态代理。
 因此当和事务方法同一个类的其他方法调用事务方法时，事务会失效，默认的调用会调用类的方法而不是代理类的方法。
+
+7.过滤器(Filter)和拦截器(Interceptor)：
+
+过滤器是在Servlet规范中定义的，是由Servlet容器支持的，能够对Web资源(html，Servlet)和客户端之间的请求和响应进行过滤。
+
+拦截器是在Spring容器内，是由Spring框架支持，是AOP的一种实现策略，能够在方法或字段前后进行拦截。拦截器可以通过IOC容器进行管理，同时可以对spring中
+的各种资源，对象进行调用。比如数据源，事务管理，Service对象等。
+
+过滤器主要是基于函数的回调，拦截器是基于Java反射机制；过滤器可以修改request，拦截器不能；过滤器需要在servlet容器中实现，拦截器可以适用于javaEE和
+javaSE等各种环境；拦截器可以调用IOC容器中各种依赖，过滤器不能；过滤器只能在请求前后进行使用，拦截器可以详情到每个方法前后。
+
+过滤器和拦截器的触发时机：
+
+![timewoo](https://timewoo.github.io/images/Filter-Interceptor.jpg)
+
+过滤器和拦截器的运行步骤：
+
+![timewoo](https://timewoo.github.io/images/Filter-Interceptor1.jpg)
+
+8.springboot自动装配：
+
+
+
+
 
 
 
