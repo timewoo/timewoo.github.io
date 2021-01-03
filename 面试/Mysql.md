@@ -142,6 +142,35 @@ mysql将数据存储为多个页，每个数据页可以组成一个双向的链
 某些运算，同时由于InnoDB将null值认为是最小的值，所以null值都是存储在B+Tree的最左边，当查询条件是IS NULL时是可以命中索引，因为null在B+Tree的最左边，但是IS NOT NULL
 就不行。对于冗余索引尽量删除，减少性能消耗。尽可能建立联合索引而不是单个索引，在!=或者<>时也不会命中索引，like中匹配%xx%也不会命中索引。
 
+mysql的crash-safe是指在任意时间段内奔溃，重启后之前提交的数据都不会丢失。mysql的crash-safe主要是保证InnoDB事务中的数据不丢失，因为只有InnoDB存在事务。
+crash-safe主要是通过redo log和undo log日志文件来保证重启后已提交的数据不会丢失，未提交的数据会自动回滚。mysql中主要存在binlog，redo log和undo log
+三种日志文件，binlog是归档日志，存在于Mysql的server层产生，不属于任何引擎，所以MyISAM和InnoDB中都存在并且相同，主要是用来记录数据库的sql语句(除了查询语句)，
+binlog会一直记录，当记录超过单个日志文件的最大值，默认是1G，就会新起一个文件继续记录，由于binlog记录的是每个操作的sql语句，所以主要是用来数据库主从同步和备份。
+可以通过binlog日志文件将数据恢复到任意时间点，在主从架构时从库也可以监听主库的binlog日志来完成同步。其实mysql对于数据的变更并不是直接修改磁盘上的数据，而是先
+在内存中查询数据，然后在内存中更新，同时将数据写入到binlog日志中，然后触发落盘机制异步将数据刷新到磁盘中。这样做的目的是为了提高性能，主要是将数据写入磁盘是随机写，
+需要找到对应数据的磁盘位置才能修改，性能开销大，无法满足mysql的性能要求，所以采用在内存中修改然后异步落盘，又为了防止断电导致数据丢失，会先写入binlog日志文件中，
+保证断电重启后数据能够恢复，虽然写binlog日志文件也是写磁盘，但是binlog是顺序写入，相比随机写入性能开销小。因此大多数的存储系统都会采用WAL(Write Ahead Log)技术，
+即日志先行，在保证数据一致性和持久性的的同时提升了语句执行的性能。如果在不考虑事务的情况下，binlog其实已经做到了数据不丢失，但是在有事务的情况下，在事务未最终commit
+之前就会记录在binlog日志文件中，这样是为了保证binlog和数据库实际的数据变更保持一致。如果在commit之后写入，在写入binlog之前断电重启就会丢失数据。但是在事务最终
+commit之前写入binlog，如果在commit之前断电重启就无法回滚数据。因此单靠binlog日志无法保证事务的数据不丢失，mysql的InnoDB引擎为了解决这个问题引入了redo log和
+undo log日志文件，在不影响mysql binlog日志的存储逻辑下来实现事务的数据不丢失。redo log是重做日志，是在InnoDB的引擎层产生，主要是记录数据库中每个数据页的修改，
+由于MySQL的数据是以数据页的形式存在，redo log日志存储数据页上的修改在断电重启后能够很快找到对应的数据页进行数据恢复。redo log是一个固定大小的文件，从头部开始写入，
+写到末尾之后就会回到开头覆盖写入，形成一个循环，在覆盖数据页时会判断数据是否已经落盘。undo log主要是用来保证事务的数据回滚和支持mvcc，undo log日志存储的是事务中
+修改操作的相反记录，即delete操作会在undo log中记录insert操作，回滚时可以根据undo log来恢复到事务之前的记录。在mvcc中也可以通过undo log来提供旧数据。在InnoDB
+中事务操作数据的流程是先在内存中查询数据，没有则在磁盘获取读入内存，在内存中修改完成后同时写入undo log和redo log，redo log中记录的是操作状态的prepare，然后在
+binlog中记录逻辑操作，commit之后将redo log的记录状态修改为commit。主要是用到了2PC的思想来保证redo log和binlog的数据一致性，因为binlog是数据库保证主从同步的
+关键日志，需要保证redo log和binlog的一致性，在两次修改redo log中间加入binlog，若在未写入binlog时断电重启，会发现redo log中的数据为prepare并且binlog中无数据，
+就会根据undo log回滚数据，若在写入binlog后断电重启，发现redo log中数据为prepare并且binlog中有数据，就会将redo log的数据修改为commit，即在binlog中写入的数据
+就会认为是需要提交的数据。在单事务的情况下binlog和redo log提交的写入顺序是一致的，但是在多事务中redo log和binlog写入顺序有交叉，比如redo log中prepare
+是T1->T2，binlog写入T1->T2，redo log中commit是T2->T1，这样主库数据是T2->T1，从库数据是T1->T2。为了保证在多事务中日志写入顺序一致，早期通过prepare_commit_mutex
+锁来保证事务的prepare-commit中其他事务无法操作，但是在锁冲突激烈时性能消耗大，而且redo log和binlog落盘写入很慢，影响性能。因此在mysql5.6引入了binlog的
+组提交，即BLGC(Binary Log Group Commit)，通过引入队列来保证一组事务commit的操作和binlog落盘日志一致。在prepare阶段事务竞争prepare_commit_mutex来
+顺序写入redo log，然后释放prepare_commit_mutex锁。然后commit阶段拆分成三步Flush Stage，Sync Stage和Commit Stage，每一个Stage都拥有一个队列，
+每个队列都有一组事务，第一个事务是leader，其他事务是follow，leader控制Stage内的事务操作。Flush Stage内Leader持有Lock_log mutex锁，并且将队列内所有事务
+写入binlog缓存中。Sync Stage时leader释放锁，持有Lock_sync mutex锁并且将队列的binlog落盘。Commit Stage时leader释放锁，持有Lock_commit mutex锁并且
+将队列内的所有事务逐一进行commit，每个队列是按照三个Stage顺序执行，但是不同队列可以交叉执行，这样实现了一组事务的提交，降低了锁的粒度，锁竞争减少，而且一组数据的
+落盘减少IO消耗。
+
 
 
 
