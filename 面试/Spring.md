@@ -244,7 +244,7 @@ READ_COMMITTED。TransactionDefinition.ISOLATION_READ_UNCOMMITTED使用最低的
 隔离，串行化，影响性能。
 
 事务的传播行为有7种，TransactionDefinition.PROPAGATION_REQUIRED是当前存在事务则加入该事务，否则创建一个新事务，事务会一起回滚。TransactionDefinition.PROPAGATION_SUPPORTS是当前存在事务
-则加入该事务，否则已非事务的方式运行。TransactionDefinition.PROPAGATION_MANDATORY是当前存在事务存在则加入该事务，否则抛出异常。TransactionDefinition.PROPAGATION_REQUIRES_NEW
+则加入该事务，否则已非事务的方式运行。TransactionDefinition.PROPAGATION_MANDATORY是当前存在事务则加入该事务，否则抛出异常。TransactionDefinition.PROPAGATION_REQUIRES_NEW
 是创建一个新事务，如果当前存在事务则挂起该事务。只会回滚当前事务。TransactionDefinition.PROPAGATION_NOT_SUPPORTED是以非事务的方式运行，如果当前事务存在则挂起该事务。
 TransactionDefinition.PROPAGATION_NEVER是以非事务的方式运行，如果存在当前事务则抛出异常。TransactionDefinition.PROPAGATION_NESTED是指当前存在事务则创建一个新事务作为当前事务
 的嵌套事务运行，否则就和TransactionDefinition.PROPAGATION_REQUIRED行为一样。即外部事务的回滚会影响内部事务，而内部事务的回滚不会影响外部事务。
@@ -684,7 +684,6 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		String[] candidates = StringUtils.toStringArray(configurations);
 		boolean[] skip = new boolean[candidates.length];
 		boolean skipped = false;
-        // 
 		for (AutoConfigurationImportFilter filter : getAutoConfigurationImportFilters()) {
 			invokeAwareMethods(filter);
 			boolean[] match = filter.match(candidates, autoConfigurationMetadata);
@@ -722,7 +721,7 @@ META-INF/spring-autoconfigure-metadata.properties和META-INF/spring.factories在
 springboot自动装配首先是springboot的启动类上添加@SpringBootApplication注解，@SpringBootApplication注解内部包含@SpringBootConfiguration，
 @EnableAutoConfiguration，@ComponentScan，@ComponentScan注解默认扫描的是当前类同级的或者同级包下的所有类。@EnableAutoConfiguration注解内部
 引入@Import(AutoConfigurationImportSelector.class)，AutoConfigurationImportSelector的selectImports方法会导入所有符合条件的自动配置类，
-selectImports方法首先会是否有@EnableAutoConfiguration注解，然后会将springboot autoconfigure包路径下META-INF/spring-autoconfigure-metadata.properties
+selectImports方法首先会判断是否有@EnableAutoConfiguration注解，然后会将springboot autoconfigure包路径下META-INF/spring-autoconfigure-metadata.properties
 配置文件加载到PropertiesAutoConfigurationMetadata对象中，PropertiesAutoConfigurationMetadata对象主要加载的是自动配置类加载所需要的条件，
 然后会获取@EnableAutoConfiguration注解内部设置的属性值AnnotationAttributes，然后通过SpringFactoriesLoader.loadFactoryNames()方法将
 springboot autoconfigure包路径下META-INF/spring.factories内配置了@EnableAutoConfiguration注解的所有配置类的类名生成类名数组configurations，
