@@ -136,6 +136,10 @@ BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处
 
 ![timewoo](https://timewoo.github.io/images/Bean1.jpg)
 
+在Spring 2.5以后，有三种形式去控制Bean的生命周期中的初始化和销毁，实现 InitializingBean 和 DisposableBean的回调方法，自定义init()和destroy()方法，
+@PostConstruct 和 @PreDestroy注解。在一个bean的生命周期中可以同时使用三种形式，在初始化和销毁时首先会去调用@PostConstruct 和 @PreDestroy注解的方法，
+其次是InitializingBean的afterPropertiesSet()方法和DisposableBean的destroy()方法，最后调用自定义的init()和destroy()方法。
+
 BeanFactory和ApplicationContext：BeanFactory和ApplicationContext是Spring的两个IOC容器，BeanFactory是最基础的，而ApplicationContext是在
 BeanFactory的基础上实现了其他功能。BeanFactory在加载Bean时使用的是Lazy Loading，在XML文件中配置了Bean，并且通过new BeanFactory(xml)加载xml配置时，
 只有BeanFactory进行了初始化，xml中的Bean还未加载，只有通过BeanFactory.getBean(BeanName)时才会加载相应的Bean，所以BeanFactory加载Bean时是Lazy Loading，
@@ -174,7 +178,7 @@ public C{
 private final Map<String, Object> singletonObjects = new ConcurrentHashMap<String, Object>(64);
 
 /**
- * 二级缓存，存储的是完成实例化但是还未初始化的bean
+ * 二级缓存，存储的是完成实例化但是还未初始化的bean，即未进行属性注入的bean
  */
 private final Map<String, Object> earlySingletonObjects = new HashMap<String, Object>(16);
 
