@@ -132,13 +132,309 @@ BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处
 检查bean是否有配置自定义init-method方法，有则调用，然后检查spring容器是否有BeanPostProcessor对象，有则执行postProcessAfterInitialization()后置处理，然后注册
 必要Destruction相关回调接口，在销毁bean时检查bean是否实现DisposableBean接口，有则调用执行destroy()方法，然后检查配置文件中包含destroy-method属性则执行指定方法。
 
+bean的实例化和初始化和JVM中定义的类的初始化和实例化不同，在JVM中定义的类加载时，会先进行类的初始化，即执行类的静态代码块以及对静态变量赋值，然后使用时才会对类进行
+实例化，即执行构造函数和对成员变量赋值，因此类的实例化需要在初始化之后。而Spring bean的实例化是创建bean对象，执行类的加载，实例化完成后就会对bean进行依赖注入，
+注入完成后就会调用bean的初始化方法（前置后置处理器，init方法等），因此bean的实例化实际是包含类的初始化。bean的执行顺序先实例化（JVM类加载，一直执行到类的初始化），
+在注入属性值和依赖，最后执行bean的初始化方法。
+
 ![timewoo](https://timewoo.github.io/images/Bean.jpg)
 
 ![timewoo](https://timewoo.github.io/images/Bean1.jpg)
 
 在Spring 2.5以后，有三种形式去控制Bean的生命周期中的初始化和销毁，实现 InitializingBean 和 DisposableBean的回调方法，自定义init()和destroy()方法，
 @PostConstruct 和 @PreDestroy注解。在一个bean的生命周期中可以同时使用三种形式，在初始化和销毁时首先会去调用@PostConstruct 和 @PreDestroy注解的方法，
-其次是InitializingBean的afterPropertiesSet()方法和DisposableBean的destroy()方法，最后调用自定义的init()和destroy()方法。
+其次是InitializingBean的afterPropertiesSet()方法和DisposableBean的destroy()方法，最后调用自定义的init()和destroy()方法。Spring源码中是在填充属性
+（populateBean）之后的初始化方法（initializeBean）之后去执行。
+```
+/**
+ * 初始化bean
+ */
+protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd){
+    //省略部分代码
+    Object wrappedBean = bean;
+    if (mbd == null || !mbd.isSynthetic()) {
+        // 前置处理器（@PostConstruct初始化在这个方法内）
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+    }
+
+    try {
+        // 初始化方法 （afterPropertiesSet()和init()方法在这里执行）
+        invokeInitMethods(beanName, wrappedBean, mbd);
+    }
+    catch (Throwable ex) {
+        throw new BeanCreationException(
+                (mbd != null ? mbd.getResourceDescription() : null),
+                beanName, "Invocation of init method failed", ex);
+    }
+    if (mbd == null || !mbd.isSynthetic()) {
+        // 后置处理器 获取代理对象
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+    }
+
+    return wrappedBean;
+}
+
+@Override
+public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
+        throws BeansException {
+
+    Object result = existingBean;
+    // 遍历bean内配置的BeanPostProcessor去执行相应的postProcessBeforeInitialization方法
+    // @PostConstruct配置会生成CommonAnnotationBeanPostProcessor，由于CommonAnnotationBeanPostProcessor
+    // 继承InitDestroyAnnotationBeanPostProcessor，会调用InitDestroyAnnotationBeanPostProcessor的
+    // postProcessBeforeInitialization方法
+    for (BeanPostProcessor processor : getBeanPostProcessors()) {
+        Object current = processor.postProcessBeforeInitialization(result, beanName);
+        if (current == null) {
+            return result;
+        }
+        result = current;
+    }
+    return result;
+}
+
+public class InitDestroyAnnotationBeanPostProcessor
+		implements DestructionAwareBeanPostProcessor, MergedBeanDefinitionPostProcessor, PriorityOrdered, Serializable {
+@Override
+public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+    LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
+    try {
+        metadata.invokeInitMethods(bean, beanName);
+    }
+    catch (InvocationTargetException ex) {
+        throw new BeanCreationException(beanName, "Invocation of init method failed", ex.getTargetException());
+    }
+    catch (Throwable ex) {
+        throw new BeanCreationException(beanName, "Failed to invoke init method", ex);
+    }
+    return bean;
+}
+
+public void invokeInitMethods(Object target, String beanName) throws Throwable {
+    // 获取设置的@PostConstruct注解的方法
+    Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
+    Collection<LifecycleElement> initMethodsToIterate =
+            (checkedInitMethods != null ? checkedInitMethods : this.initMethods);
+    if (!initMethodsToIterate.isEmpty()) {
+        for (LifecycleElement element : initMethodsToIterate) {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Invoking init method on bean '" + beanName + "': " + element.getMethod());
+            }
+            // 反射调用方法
+            element.invoke(target);
+        }
+    }
+}
+
+}
+```
+
+IOC容器在所有的bean初始化完成之后以及销毁所有bean完成后会进行相关Lifecycle接口的回调，可以自定义实现Lifecycle接口的类在IOC容器启动和停止时进行自定义处理，
+比如在Spring启动后配置后台程序（对MQ的轮询操作等）。
+```
+public interface Lifecycle {
+	/**
+	 * 启动回调
+	 */
+	void start();
+
+	/**
+	 * 销毁回调
+	 */
+	void stop();
+
+	/**
+	 * 判断组件是否正在运行，对于IOC容器对于所有组件都运行时返回true
+     * 返回true才会调用stop回调，返回false才会调用strat回调
+     * 实现类需要在start和stop方法内重置isRunning状态
+	 */
+	boolean isRunning();
+
+}
+```
+Lifecycle的实现类只有在IOC容器显示的调用start()和stop()方法时才会调用相关回调，所以Spring提供了LifecycleProcessor。
+```
+public interface LifecycleProcessor extends Lifecycle {
+
+	/**
+	 * IOC refresh时调用
+	 */
+	void onRefresh();
+
+	/**
+	 * IOC close时调用
+	 */
+	void onClose();
+}
+```
+Spring在没有显示配置lifecycleProcessor时默认使用的是DefaultLifecycleProcessor实现类，在applicationContext调用start()和stop()方法时，
+DefaultLifecycleProcessor会获取Lifecycle接口的所有实现类，判断实现类的isRunning()来判断是否调用对应回调，当applicationContext调用refresh()
+和close()方法时，DefaultLifecycleProcessor在refresh时会判断只有SmartLifecycle实现类并且设置自动启动的才会执行start()回调。
+```
+public void onRefresh() {
+    startBeans(true);
+    this.running = true;
+}
+
+private void startBeans(boolean autoStartupOnly) {
+    Map<String, Lifecycle> lifecycleBeans = getLifecycleBeans();
+    Map<Integer, LifecycleGroup> phases = new HashMap<>();
+    lifecycleBeans.forEach((beanName, bean) -> {
+        // refresh时只有SmartLifecycle实现类并且设置自动启动的才会执行start()回调
+        if (!autoStartupOnly || (bean instanceof SmartLifecycle && ((SmartLifecycle) bean).isAutoStartup())) {
+            int phase = getPhase(bean);
+            LifecycleGroup group = phases.get(phase);
+            if (group == null) {
+                group = new LifecycleGroup(phase, this.timeoutPerShutdownPhase, lifecycleBeans, autoStartupOnly);
+                phases.put(phase, group);
+            }
+            group.add(beanName, bean);
+        }
+    });
+    if (!phases.isEmpty()) {
+        List<Integer> keys = new ArrayList<>(phases.keySet());
+        Collections.sort(keys);
+        for (Integer key : keys) {
+            // 自定义start()回调
+            phases.get(key).start();
+        }
+    }
+}
+```
+如果想在refresh时调用start()方法，一种是自定义lifecycleProcessor的实现类并且设置bean的id为lifecycleProcessor来替换默认的DefaultLifecycleProcessor
+逻辑。另一种方法是实现SmartLifecycle接口。
+```
+public interface SmartLifecycle extends Lifecycle, Phased {
+	/**
+	 * 调用顺序
+	 */
+	int DEFAULT_PHASE = Integer.MAX_VALUE;
+
+
+	/**
+	 * 是否自动启动，ture时refresh()会调用start()方法
+	 */
+	default boolean isAutoStartup() {
+		return true;
+	}
+
+	/**
+	 * 异步操作
+	 */
+	default void stop(Runnable callback) {
+        // 需要调用callback.run()，不调用DefaultLifecycleProcessor认为stop未完成
+        // 默认超时30s后自动结束
+		stop();
+		callback.run();
+	}
+
+	/**
+	 * 获取顺序
+	 */
+	@Override
+	default int getPhase() {
+		return DEFAULT_PHASE;
+	}
+}
+```
+SmartLifecycle接口的Phase值表示实现的类的执行顺序，当SmartLifecycle实现类有多个时可以根据Phase值的大小来控制执行的顺序。IOC启动时根据Phase的
+值正序调用，IOC停止时根据Phase的值倒序调用。其他Lifecycle接口的实现类Phase默认值是0。SmartLifecycle实现类的stop(Runnable callback)能够进行一些
+异步服务的启动和调用，默认的DefaultLifecycleProcessor在调用stop()方法时判断是否是SmartLifecycle实现类，是则调用实现类的stop(Runnable callback)
+方法，同时通过CountDownLatch来等待stop()调用成功，默认是等待30s超时后继续执行，可以修改超时时间。
+```
+public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactoryAware {
+		public void stop() {
+			if (this.members.isEmpty()) {
+				return;
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Stopping beans in phase " + this.phase);
+			}
+			this.members.sort(Collections.reverseOrder());
+            // 设置CountDownLatch，数量为SmartLifecycle实现类数量
+			CountDownLatch latch = new CountDownLatch(this.smartMemberCount);
+			Set<String> countDownBeanNames = Collections.synchronizedSet(new LinkedHashSet<>());
+			Set<String> lifecycleBeanNames = new HashSet<>(this.lifecycleBeans.keySet());
+			for (LifecycleGroupMember member : this.members) {
+				if (lifecycleBeanNames.contains(member.name)) {
+                    // 调用自定义的stop()方法
+					doStop(this.lifecycleBeans, member.name, latch, countDownBeanNames);
+				}
+				else if (member.bean instanceof SmartLifecycle) {
+					// Already removed: must have been a dependent bean from another phase
+					latch.countDown();
+				}
+			}
+			try {
+                // 等待CountDownLatch释放，默认超时30s
+				latch.await(this.timeout, TimeUnit.MILLISECONDS);
+				if (latch.getCount() > 0 && !countDownBeanNames.isEmpty() && logger.isInfoEnabled()) {
+					logger.info("Failed to shut down " + countDownBeanNames.size() + " bean" +
+							(countDownBeanNames.size() > 1 ? "s" : "") + " with phase value " +
+							this.phase + " within timeout of " + this.timeout + ": " + countDownBeanNames);
+				}
+			}
+			catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
+
+	private void doStop(Map<String, ? extends Lifecycle> lifecycleBeans, final String beanName,
+			final CountDownLatch latch, final Set<String> countDownBeanNames) {
+
+		Lifecycle bean = lifecycleBeans.remove(beanName);
+		if (bean != null) {
+			String[] dependentBeans = getBeanFactory().getDependentBeans(beanName);
+			for (String dependentBean : dependentBeans) {
+				doStop(lifecycleBeans, dependentBean, latch, countDownBeanNames);
+			}
+			try {
+				if (bean.isRunning()) {
+					if (bean instanceof SmartLifecycle) {
+						if (logger.isTraceEnabled()) {
+							logger.trace("Asking bean '" + beanName + "' of type [" +
+									bean.getClass().getName() + "] to stop");
+						}
+						countDownBeanNames.add(beanName);
+                        // 调用自定义SmartLifecycle实现类的stop(Runnable callback)
+                        // callback.run()会调用latch.countDown()释放，外层线程可以继续执行，如果不执行callback.run()
+                        // 则会默认30s后自动超时释放
+						((SmartLifecycle) bean).stop(() -> {
+							latch.countDown();
+							countDownBeanNames.remove(beanName);
+							if (logger.isDebugEnabled()) {
+								logger.debug("Bean '" + beanName + "' completed its stop procedure");
+							}
+						});
+					}
+					else {
+						if (logger.isTraceEnabled()) {
+							logger.trace("Stopping bean '" + beanName + "' of type [" +
+									bean.getClass().getName() + "]");
+						}
+						bean.stop();
+						if (logger.isDebugEnabled()) {
+							logger.debug("Successfully stopped bean '" + beanName + "'");
+						}
+					}
+				}
+				else if (bean instanceof SmartLifecycle) {
+					// Don't wait for beans that aren't running...
+					latch.countDown();
+				}
+			}
+			catch (Throwable ex) {
+				if (logger.isWarnEnabled()) {
+					logger.warn("Failed to stop bean '" + beanName + "'", ex);
+				}
+			}
+		}
+	}
+
+}
+```
+
 
 BeanFactory和ApplicationContext：BeanFactory和ApplicationContext是Spring的两个IOC容器，BeanFactory是最基础的，而ApplicationContext是在
 BeanFactory的基础上实现了其他功能。BeanFactory在加载Bean时使用的是Lazy Loading，在XML文件中配置了Bean，并且通过new BeanFactory(xml)加载xml配置时，
