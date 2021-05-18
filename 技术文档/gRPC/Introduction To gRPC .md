@@ -24,14 +24,14 @@ Buffers)序列化协议开发，并且支持多种语言。gRPC主要有以下�
   端之间的通信。
 
 gRPC的服务大体架构如下  
-![timewoo](https://timewoo.github.io/images/gRPC.svg)
+![timewoo](https://timewoo.github.io/images/gRPC.svg)  
 gRPC服务端使用C++构建，客户端使用Ruby或者Java构建，客户端通过一个Stub存根(代理)对象发起RPC调用，请求和响应通过ProtoBuf来进行序列化。
 通过gRPC，使得远程服务的调用对于使用者来说更加简单和透明，底层的传输方式，序列方式以及通信细节等都不需要关注。
 ## 使用ProtoBuf进行服务定义
 客户端在调用服务端的远程接口之前，需要约定接口的方法签名，请求和响应数据结构等，这个过程称之为服务定义。服务定义需要IDL(接口定义语言)来完成，
 gRPC中默认使用ProtoBuf来定义服务。ProtoBuf是Google开源的一款序列化框架，内部定义了一种数据序列化的协议，其独立于语言和平台，支持多种语言
-的实现，通过定义.proto文件，使用其编译器生成特定语言服务端接口、客户端Stub代码以及通信的数据结构。服务端和客户端之间的数据传输如下
-![timewoo](https://timewoo.github.io/images/ProtoBuf.png)
+的实现，通过定义.proto文件，使用其编译器生成特定语言服务端接口、客户端Stub代码以及通信的数据结构。服务端和客户端之间的数据传输如下  
+![timewoo](https://timewoo.github.io/images/ProtoBuf.png)  
 ProtoBuf目前有proto2和proto3两个版本，proto3相比较proto2语法上更为简化，提供了一些新功能，并且支持更多的语言。gPRC推荐使用proto3来
 定义服务文件
 ### 定义Message(消息)
