@@ -9,7 +9,7 @@ gRPC使用HTTP 2.0作为基础的通信模式，而HTTP 2.0在请求时会重用
 地址列表的最后一个进行重连，同时name resolver会重新开始解析主机名。这在代理不可用或者DNS改变时能够保证获取到最新的可用的地址列表，当解析完成时，load balancer
 将会获取一个新的地址列表，如果地址列表发生了变化，load balancer可能会降低新列表中不存在地址的连接速度，或者连接到新的地址。
 load balancer来自于  
-https://github.com/grpc/grpc/blob/master/doc/load-balancing.md
+https://github.com/grpc/grpc/blob/master/doc/load-balancing.md  
 https://grpc.io/blog/grpc-load-balancing/
 ## 识别失败的连接
 gRPC连接的可用性取决于识别失败连接的能力，主要有两种类型的连接失败，一种是干净地失败，即失败的信息会在连接双方进行传递，一种是不太干净地失败，即失败的信息
@@ -27,7 +27,7 @@ HTTP2的连接，这样gPRC将会触发load balancer重新进行连接。这样�
 (GCP) load balancer将会把进入空闲状态10分钟以上的连接断开，Amazon Web Services Elastic Load Balancers(AWS ELBs)将会把进入空闲状态60秒以上的连接断开。  
 所以gRPC可以通过keepalive来建立非空闲的连接，这样代理杀死空闲连接的规则就会跳过这些连接，保证了长连接的存活。  
 keepalive具体的设置规则  
-https://github.com/grpc/grpc/blob/master/doc/keepalive.md
+https://github.com/grpc/grpc/blob/master/doc/keepalive.md  
 https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md
 
 ## 清除不活跃连接
