@@ -138,9 +138,3 @@ gRPC中定义了四种服务接口类型，主要分为三类
   好处是客户端和服务端可以按照任意的顺序去处理发送的消息，客户端和服务端可以并行进行消息的处理，有更高的灵活性。双向流充分利用了HTTP 2.0的多路复用功能，
   实现了客户端和服务端的全双工通信。
   ![timewoo](https://timewoo.github.io/images/gRPC-bidirectionalStream.png)
-
-  
-  
-
-
-
