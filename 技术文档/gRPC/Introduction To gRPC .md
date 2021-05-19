@@ -138,3 +138,23 @@ gRPC中定义了四种服务接口类型，主要分为三类
   好处是客户端和服务端可以按照任意的顺序去处理发送的消息，客户端和服务端可以并行进行消息的处理，有更高的灵活性。双向流充分利用了HTTP 2.0的多路复用功能，
   实现了客户端和服务端的全双工通信。
   ![timewoo](https://timewoo.github.io/images/gRPC-bidirectionalStream.png)
+## 生成代码
+在定义了gRPC通信的方法，请求和响应参数后，可以通过protocol编译器来生成指定语言的代码，现在protocol编译器支持生成Java，Kotlin，Python，C++，Go，
+Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
+- 命令行执行protoc进行代码生成  
+  首先需要下载protocol的编译器，地址为https://github.com/protocolbuffers/protobuf/releases/latest ，下载完成后配置protoc环境变量后执行下列命令生成指定语言的代码
+  ```
+  protoc --proto_path=IMPORT_PATH --cpp_out=DST_DIR --java_out=DST_DIR --python_out=DST_DIR --go_out=DST_DIR --ruby_out=DST_DIR --objc_out=DST_DIR --csharp_out=DST_DIR path/to/file.proto
+  ```
+  --proto_path：指定proto文件的目录，如果未指定，默认是在当前目录下。  
+  --cpp_out/--java_out...：指定语言生成的代码的目录，--java_out=DST_DIR指定生成java代码的存放路径。   
+  path/to/file.proto：指定需要生成的proto文件，可以指定多个。  
+  由于protocol本身不提供RPC的实现，所以以上的命令只会生成proto文件定义的message代码，如果需要生成service代码则需要下载对应RPC实现插件，这里使用gRPC Java的插件生成
+  对应的gRPC代码，首先选择https://mvnrepository.com/artifact/io.grpc/protoc-gen-grpc-java 的版本，点击"Files"下载对应系统的插件，然后执行下列命令生成gRPC代码
+  ```
+  protoc --proto_path=IMPORT_PATH --plugin=protoc-gen-grpc-java=PLUGIN_DIR --grpc-java_out=DST_DIR path/to/file.proto
+  ```
+  --plugin：指定插件的地址  
+  
+- idea插件生成代码
+  
