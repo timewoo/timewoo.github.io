@@ -5,12 +5,9 @@ gRPC使用HTTP 2.0作为基础的通信模式，而HTTP 2.0在请求时会重用
 在连接不活跃的状态下保持连接会增加服务端的资源消耗，所以为了避免不活跃的连接长期占用服务端的连接资源，还需要配置连接回收的相关策略。
 ## 连接管理
 为了保证gRPC连接的活跃性，健康性和可用性，gRPC利用了很多的组件，最重要的是name resolver(名称解析器)和load balancer(负载均衡器)。name resolver
-将名称转化成地址，并将地址交给load balancer，load balancer将根据地址建立连接，并且在连接中进行PRC的负载平衡。当连接失败时，load balancer将会从
+将名称转化成地址，并将地址交给load balancer，load balancer将根据地址建立连接，并且在连接中进行RPC的负载均衡。当连接失败时，load balancer将会从
 地址列表的最后一个进行重连，同时name resolver会重新开始解析主机名。这在代理不可用或者DNS改变时能够保证获取到最新的可用的地址列表，当解析完成时，load balancer
 将会获取一个新的地址列表，如果地址列表发生了变化，load balancer可能会降低新列表中不存在地址的连接速度，或者连接到新的地址。
-load balancer来自于  
-https://github.com/grpc/grpc/blob/master/doc/load-balancing.md  
-https://grpc.io/blog/grpc-load-balancing/
 ## 识别失败的连接
 gRPC连接的可用性取决于识别失败连接的能力，主要有两种类型的连接失败，一种是干净地失败，即失败的信息会在连接双方进行传递，一种是不太干净地失败，即失败的信息
 不会在连接双方进行传递。  
@@ -27,7 +24,11 @@ HTTP2的连接，这样gPRC将会触发load balancer重新进行连接。这样�
 (GCP) load balancer将会把进入空闲状态10分钟以上的连接断开，Amazon Web Services Elastic Load Balancers(AWS ELBs)将会把进入空闲状态60秒以上的连接断开。  
 所以gRPC可以通过keepalive来建立非空闲的连接，这样代理杀死空闲连接的规则就会跳过这些连接，保证了长连接的存活。  
 keepalive具体的设置规则  
-https://github.com/grpc/grpc/blob/master/doc/keepalive.md  
+https://github.com/grpc/grpc/blob/master/doc/keepalive.md
 https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md
 
-## 清除不活跃连接
+
+reference：  
+https://github.com/grpc/grpc/blob/master/doc/load-balancing.md
+https://grpc.io/blog/grpc-load-balancing
+
