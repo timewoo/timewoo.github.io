@@ -26,5 +26,5 @@ HTTP/2的连接，这样gRPC将会触发load balancer重新进行连接。这样
 keepalive具体的设置规则  
 https://github.com/grpc/grpc/blob/master/doc/keepalive.md  
 https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md  
-reference：  
+## reference：  
 https://grpc.io/blog/grpc-on-http2
