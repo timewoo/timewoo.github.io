@@ -55,7 +55,7 @@ gRPC推荐使用外部负载均衡器的方式来实现负载均衡，外部负�
   
 4.对于每个RPC请求，客户端负载均衡策略将选择哪个subchannel去发送。
   - 在grpclb策略中，客户端将会根据外部负载均衡器返回的服务端地址顺序发送请求，如果返回的服务端地址为空，则会阻塞到有服务端地址返回为止。
-## reference
+## reference：
 https://grpc.io/blog/grpc-load-balancing  
 https://github.com/grpc/grpc/blob/master/doc/load-balancing.md  
 https://majidfn.com/blog/20201222-grpc-load-balancing
