@@ -24,11 +24,11 @@ HTTP2的连接，这样gPRC将会触发load balancer重新进行连接。这样�
 (GCP) load balancer将会把进入空闲状态10分钟以上的连接断开，Amazon Web Services Elastic Load Balancers(AWS ELBs)将会把进入空闲状态60秒以上的连接断开。  
 所以gRPC可以通过keepalive来建立非空闲的连接，这样代理杀死空闲连接的规则就会跳过这些连接，保证了长连接的存活。  
 keepalive具体的设置规则  
-https://github.com/grpc/grpc/blob/master/doc/keepalive.md
+https://github.com/grpc/grpc/blob/master/doc/keepalive.md  
 https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md
 
 
 reference：  
-https://github.com/grpc/grpc/blob/master/doc/load-balancing.md
+https://github.com/grpc/grpc/blob/master/doc/load-balancing.md  
 https://grpc.io/blog/grpc-load-balancing
 
