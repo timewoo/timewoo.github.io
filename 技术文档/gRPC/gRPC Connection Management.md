@@ -25,9 +25,6 @@ HTTP/2的连接，这样gRPC将会触发load balancer重新进行连接。这样
 所以gRPC可以通过keepalive来建立非空闲的连接，这样代理杀死空闲连接的规则就会跳过这些连接，保证了长连接的存活。  
 keepalive具体的设置规则  
 https://github.com/grpc/grpc/blob/master/doc/keepalive.md  
-https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md
-
-
+https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md  
 reference：  
 https://grpc.io/blog/grpc-on-http2
-
