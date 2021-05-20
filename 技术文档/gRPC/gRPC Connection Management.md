@@ -29,6 +29,5 @@ https://github.com/grpc/proposal/blob/master/A8-client-side-keepalive.md
 
 
 reference：  
-https://github.com/grpc/grpc/blob/master/doc/load-balancing.md  
-https://grpc.io/blog/grpc-load-balancing
+https://grpc.io/blog/grpc-on-http2
 
