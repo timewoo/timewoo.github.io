@@ -155,6 +155,126 @@ Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
   protoc --proto_path=IMPORT_PATH --plugin=protoc-gen-grpc-java=PLUGIN_DIR --grpc-java_out=DST_DIR path/to/file.proto
   ```
   --plugin：指定插件的地址  
-  
+  执行上述命令后就会生成gRPC的java实现代码。
 - idea插件生成代码
+  除了命令之外，可以使用idea的自动生成代码的插件，根据https://github.com/google/protobuf-gradle-plugin 配置idea的插件后就可以实现proto文件的
+  代码自动生成。 
+  
+主要会生成了两个.java文件，一个是定义的请求响应的model类，一个是实现的gRPC类。结构如下
+![timewoo](https://timewoo.github.io/images/gRPC-generate.png)
+## 构建简单的gRPC服务
+编写一个gRPC版本的helloWorld来展示gRPC如何构建服务
+- 定义proto文件
+  ```protobuf
+  //指定proto语法版本
+  syntax = "proto3";
+  // 设置message是否拆分，默认为false，生成的message放在一个java类中
+  option java_multiple_files = true;
+  // 设置生成的java的package路径
+  option java_package = "com.example.grpcinterface";
+  // 接口服务
+  service Greeter{
+  // rpc接口
+    rpc sayHello(HelloRequest) returns (HelloReply);
+  }
+  // 请求model
+  message HelloRequest{
+    string name = 1;
+  }
+  // 响应model
+  message HelloReply{
+    string message = 1;
+  }
+  ```
+- 配置插件，自动生成java代码
+  ![timewoo](https://timewoo.github.io/images/gRPC-demo-dir.png)
+- 实现gRPC服务端  
+  a.首先引入依赖
+  ```
+    implementation 'io.grpc:grpc-netty-shaded:1.36.0'
+    implementation 'io.grpc:grpc-protobuf:1.36.0'
+    implementation 'io.grpc:grpc-stub:1.36.0'
+  ```
+  b.服务端创建具体的服务接口实现类，扩展gRPC自动生成的抽象类。
+  ```java
+  public static class GreetImpl extends GreeterGrpc.GreeterImplBase{
+
+      @Override
+      public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
+          HelloReply helloReply = HelloReply.newBuilder().setMessage("Hello "+request.getName()).build();
+          responseObserver.onNext(helloReply);
+          responseObserver.onCompleted();
+      }
+  }
+  ```
+  c.创建服务的启动参数
+  ```
+  int port = 8081;
+  Server server = ServerBuilder.forPort(port).addService(new GreetImpl()).build().start();
+  log.info("start server");
+  server.awaitTermination();
+  ```
+  完整的代码如下
+  ```java
+  @Slf4j
+  public class GrpcServer {
+
+    public static void main(String[] args) throws InterruptedException, IOException {
+        int port = 8081;
+        Server server = ServerBuilder.forPort(port).addService(new GreetImpl()).build().start();
+        log.info("start server");
+        server.awaitTermination();
+    }
+
+    public static class GreetImpl extends GreeterGrpc.GreeterImplBase{
+
+        @Override
+        public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
+            HelloReply helloReply = HelloReply.newBuilder().setMessage("Hello "+request.getName()).build();
+            responseObserver.onNext(helloReply);
+            responseObserver.onCompleted();
+        }
+    }
+  }
+  ```
+  gRPC服务端创建的过程如下
+  ![timewoo](https://timewoo.github.io/images/gRPC-server.png)
+- 实现gRPC客户端
+  a.引入依赖，和服务端相同
+  ```
+    implementation 'io.grpc:grpc-netty-shaded:1.36.0'
+    implementation 'io.grpc:grpc-protobuf:1.36.0'
+    implementation 'io.grpc:grpc-stub:1.36.0'
+  ```
+  b.根据服务端地址创建ManagedChannel，创建客户端调用的stub，客户端通过stub发起rpc调用，获取服务端响应
+  ```java
+  @Slf4j
+  public class GrpcClient {
+
+    public static void main(String[] args) {
+        String address = "localhost";
+        int port = 8081;
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build();
+        GreeterGrpc.GreeterBlockingStub blockingStub = GreeterGrpc.newBlockingStub(channel);
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String name = scanner.next().trim();
+            HelloRequest helloRequest = HelloRequest.newBuilder().setName(name).build();
+            HelloReply helloReply = blockingStub.sayHello(helloRequest);
+            String message = helloReply.getMessage();
+            log.warn("get message:{}", message);
+        }
+    }
+  }
+  ```
+  gRPC客户端的调用流程如下
+  ![timewoo](https://timewoo.github.io/images/gRPC-client.png)
+## 总结
+gRPC使用protobuf作为数据传输的载体，序列化和反序列化性能高，同时底层采用HTTP/2协议传输，可以使用HTTP/2的多路复用以及双向流特性来减少请求的延迟。
+不足之处在于protobuf对于泛型支持不好，同时由于使用的是HTTP/2协议，部分云不支持基于HTTP/2的负载均衡，而且对于服务发现、负载均衡以及服务治理等方面
+需要自己实现，其实gRPC适用于Istio和K8s来进行微服务的调度和监控的场景，将服务发现、负载均衡、链路追踪以及服务治理等实现交给Istio和K8s来处理，gRPC
+服务只用来进行业务的处理。但是目前spring cloud和K8s有部分功能上的重叠，像服务发现和负载均衡等服务治理功能交给spring cloud的组件来实现，这样的情况下
+使用gRPC就需要自己去实现服务发现和负载均衡等功能。所以如果采用Istio方式进行服务的部署的情况下，gRPC是一个不错的选择，如果是在spring cloud下进行
+服务治理，则在使用gRPC时需要更多的考虑。
+  
   
