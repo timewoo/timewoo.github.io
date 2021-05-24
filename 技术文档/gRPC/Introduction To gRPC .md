@@ -122,7 +122,7 @@ gRPC中定义了四种服务接口类型，主要分为三类
     ```
     服务端在stream流中返回N个消息作为响应，并且每个消息是单独发送的，客户端从stream流中按照顺序读取响应消息，可以在单个RPC调用中处理服务端流式响应。
     服务端在发送所有的消息之后才会返回服务端的status details(status code,status message)和trailing metadata给客户端。  
-    好处是当客户端需要获取的响应消息较多时，服务端采用stream流式返回，能够减少服务器的瞬时压力，同时客户端可以异步的进行消息的处理，更有及时性。
+    好处是当客户端需要获取的响应消息较多时，服务端采用stream流式返回，能够减少服务器的瞬时压力，同时客户端可以异步的进行消息的处理，更有及时性。  
     ![timewoo](https://timewoo.github.io/images/gRPC-serverStream.png)
   - Client streaming RPCs是客户端流式RPC调用，客户端发送stream流请求，并且等待服务端读取消息并且返回响应，服务端从流中按顺序获取结果。
     ```protobuf
@@ -267,7 +267,7 @@ Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
     }
   }
   ```
-  gRPC客户端的调用流程如下
+  gRPC客户端的调用流程如下  
   ![timewoo](https://timewoo.github.io/images/gRPC-client.png)
 ## 总结
 gRPC使用protobuf作为数据传输的载体，序列化和反序列化性能高，同时底层采用HTTP/2协议传输，可以使用HTTP/2的多路复用以及双向流特性来减少请求的延迟。
