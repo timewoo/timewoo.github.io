@@ -4,7 +4,7 @@ RPC是Remote Procedure Call(远程过程调用)的简称，RPC是一种用于构
 节点的服务之间相互调用像调用本地接口一样，对服务调用方隐藏了通信。在分布式系统中进程间的通信一般是HTTP和RPC两种形式，RPC相比较HTTP
 来说有以下几个优点
 - 传输效率  
-  RPC可以自定义通信协议，可以基于TCP、UDP或者HTTP等，
+  RPC可以自定义通信协议，可以基于TCP、UDP或者HTTP等
 - 性能消耗  
   RPC框架自带高效的序列化机制，序列化和反序列化耗时更低，序列化后的字节数更小
 - 负载均衡  
@@ -12,15 +12,15 @@ RPC是Remote Procedure Call(远程过程调用)的简称，RPC是一种用于构
 - 服务治理  
   RPC下游的服务新增，重启以及下线都能够自动通知上游使用者，HTTP需要事先通知并修改相关配置
 ## gRPC简介
-gRPC是由Google开发并且开源的的高效率RPC框架，主要是面向于移动应用开发并且基于HTTP 2.0协议标准设计，同时基于ProtoBuf(Protocol 
+gRPC是由Google开发并且开源的的高效率RPC框架，主要是面向于移动应用开发并且基于HTTP/2协议标准设计，同时基于ProtoBuf(Protocol 
 Buffers)序列化协议开发，并且支持多种语言。gRPC主要有以下几个优点
 - 语言中立  
   支持C，Java，Go，Python等多种语言来构建RPC服务，可以使不同语言构建的微服务之间的RPC通信更为简单。
 - 基于IDL(Interface Definition Language,接口定义语言)定义服务  
   gRPC使用ProtoBuf来定义服务，ProtoBuf是由Google开发的一种与平台和语言无关，可扩展的数据序列化协议(类似XML、JSON)，压缩和传输效率
   高，语法简单，表达能力强。ProtoBuf可以根据定义的.proto文件来生成指定语言的服务端接口，客户端Stub和gRPC通信的数据结构，更加易于开发。
-- 基于HTTP 2.0协议  
-  HTTP 2.0相较于HTTP 1.x新增了消息头压缩，双向流，单TCP的多路复用，服务端推送等，这些特性使得gRPC更加适用于移动场景下的客户端和服务
+- 基于HTTP/2协议  
+  HTTP/2相较于HTTP 1.x新增了消息头压缩，双向流，单TCP的多路复用，服务端推送等，这些特性使得gRPC更加适用于移动场景下的客户端和服务
   端之间的通信。
 
 gRPC的服务大体架构如下  
@@ -49,12 +49,12 @@ message Request{
 [Field Rules] [Field Type] [Field Name] = [Field Number]
 ```
 - Field Rules用来修饰字段的规则，主要分为  
-  - singular:message最多拥有一个该字段的值，proto3默认的字段修饰。
-  - repeated:message可以拥有多个该字段的值，类似Java中的数组。
+  - singular：message最多拥有一个该字段的值，proto3默认的字段修饰。
+  - repeated：message可以拥有多个该字段的值，类似Java中的数组。
 - Field Type是字段的数据类型，主要分为
   - 基本数据类型  
     ![timewoo](https://timewoo.github.io/images/proto3_type.png)
-    基本上int32对应Java的int，int64对应Java的long，string对应Java的String，在proto3中会将未设置的字段值设置成默认值。
+    基本上int32对应Java的int，int64对应Java的long，string对应Java的String，在proto3中在反序列化时会将未设置的字段值统一设置成默认值。
     - string默认值是空字符串
     - bytes默认值是空bytes
     - bool默认值是false
@@ -63,7 +63,7 @@ message Request{
     - repeated默认值是空数组
     - message类型的默认值取决与具体语言，Java中是null  
       
-    因此在proto3中无法区分字段是未设置值还是设置成了默认值
+    因此在proto3中无法区分字段是未设置值还是设置成了默认值，所以在后端校验字段值时需要注意，尽量不要使用字段的默认值去校验。
   - 复杂数据类型  
     enums和Map等  
     ```protobuf
@@ -88,8 +88,8 @@ message Request{
     }
     ```
 - Field Name是字段名
-- Field Number代表的是字段的唯一编号，用于标识在二进制编码中的字段，所以在确定编号后不应该更改字段号。而且编号范围在1-15的字段会需要一个
-  字节来编码，16-2047的字段会需要两个字节来编码，所以尽量将频繁出现的字段设置1-15。同时编号无法设置成19000-19999，因为这个范围的是保留数。
+- Field Number代表的是字段的唯一编号，用于标识在二进制编码中的字段，所以在确定编号后不应该更改编号。而且编号范围在1-15的字段会需要一个
+  字节来编码，16-2047的字段会需要两个字节来编码，所以尽量将频繁出现的字段设置1-15。同时编号无法设置成19000-19999，因为这个范围内的数字是保留数。
 ### 定义Service(服务接口)
 服务是指RPC定义的通信接口，类似Java中的interface，ProtoBuf的编译器将会根据选择的语言生成服务接口和客户端Stubs。下面是一个定义的service
 ```protobuf
@@ -135,7 +135,7 @@ gRPC中定义了四种服务接口类型，主要分为三类
   ```protobuf
   rpc Search(stream Request) returns (stream Response)
   ```
-  好处是客户端和服务端可以按照任意的顺序去处理发送的消息，客户端和服务端可以并行进行消息的处理，有更高的灵活性。双向流充分利用了HTTP 2.0的多路复用功能，
+  好处是客户端和服务端可以按照任意的顺序去处理发送的消息，客户端和服务端可以并行进行消息的处理，有更高的灵活性。双向流充分利用了HTTP/2的多路复用功能，
   实现了客户端和服务端的全双工通信。
   ![timewoo](https://timewoo.github.io/images/gRPC-bidirectionalStream.png)
 ## 生成代码
@@ -156,7 +156,7 @@ Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
   ```
   --plugin：指定插件的地址  
   执行上述命令后就会生成gRPC的java实现代码。
-- idea插件生成代码
+- idea插件生成代码  
   除了命令之外，可以使用idea的自动生成代码的插件，根据https://github.com/google/protobuf-gradle-plugin 配置idea的插件后就可以实现proto文件的
   代码自动生成。 
   
@@ -239,7 +239,7 @@ Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
   ```
   gRPC服务端创建的过程如下
   ![timewoo](https://timewoo.github.io/images/gRPC-server.png)
-- 实现gRPC客户端
+- 实现gRPC客户端  
   a.引入依赖，和服务端相同
   ```
     implementation 'io.grpc:grpc-netty-shaded:1.36.0'
@@ -271,7 +271,7 @@ Ruby，Objective-C和C#的代码。protocol生成代码有以下两种方式
   ![timewoo](https://timewoo.github.io/images/gRPC-client.png)
 ## 总结
 gRPC使用protobuf作为数据传输的载体，序列化和反序列化性能高，同时底层采用HTTP/2协议传输，可以使用HTTP/2的多路复用以及双向流特性来减少请求的延迟。
-不足之处在于protobuf对于泛型支持不好，同时由于使用的是HTTP/2协议，部分云不支持基于HTTP/2的负载均衡，而且对于服务发现、负载均衡以及服务治理等方面
+不足之处在于protobuf对于泛型支持不好，同时由于使用的是HTTP/2协议，部分云不支持基于HTTP/2的负载均衡，而且对于服务发现、负载均衡以及服务治理等方面的需求
 需要自己实现，其实gRPC适用于Istio和K8s来进行微服务的调度和监控的场景，将服务发现、负载均衡、链路追踪以及服务治理等实现交给Istio和K8s来处理，gRPC
 服务只用来进行业务的处理。但是目前spring cloud和K8s有部分功能上的重叠，像服务发现和负载均衡等服务治理功能交给spring cloud的组件来实现，这样的情况下
 使用gRPC就需要自己去实现服务发现和负载均衡等功能。所以如果采用Istio方式进行服务的部署的情况下，gRPC是一个不错的选择，如果是在spring cloud下进行
