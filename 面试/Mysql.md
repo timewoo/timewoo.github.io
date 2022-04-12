@@ -54,25 +54,92 @@ MySQL的InnoDB默认的事务隔离级别是可重复读，但是InnoDB实现可
 
 ### InnoDB锁类型：
 
-- 共享锁和排它锁（Shared and Exclusive Locks）：InnoDB实现的两类标准行级锁，共享锁和排它锁
+- 共享锁和排它锁（Shared and Exclusive Locks）：InnoDB基于读写锁的概念实现的两类标准行级锁，共享锁和排它锁。
 
   - 共享锁（S）：允许获取锁的事务读取对应的行记录，不同的事务可以读取锁定的记录，也可以获取其他的共享锁。
   - 排它锁（X）：允许获取锁的事务更新或者删除对应的行记录，同一时间只能有一种锁，阻止其他事务加锁，依赖于数据库的隔离级别，可能阻止其他事务写入同一行或者读取同一行。InnoDB默认的隔离级别（Repeatable Read）通过允许事务读取排它锁的行记录来提升并发。
 
-  不同的事务可以对相同的行记录获取共享锁，排它锁同一时间只能有一个事务获取锁，其他事务在获取锁时需要等待。
+  不同的事务可以对相同的行记录获取共享锁，排它锁同一时间只能有一个事务获取锁，其他事务在获取锁时需要等待。在表级锁中也存在共享锁和排他锁的概念，只是作用的范围不同，行级锁是锁住对应行的记录，表级锁是锁住整个表。
 
-- 意向锁（Intention Locks）：
+- 意向锁（Intention Locks）：InnoDB实现的一种特殊的表级锁，为了支持多粒度的锁机制而设计的，可以实现行级锁和表级锁共存。作用是表级锁在获取锁时可以快速进行锁冲突的判断，比如对一张表加表锁时需要判断两步，第一步是判读是否已有表级排它锁，第二步是判断是否已有行级锁。对于第二步，就需要判断表中的每一行数据，在表数据较大时效率比较低下。因此InnoDB设计了意向锁，在事务获取行级锁时同时设置对应的意向锁，这样在其他事务加表锁时就只需要判断意向锁，将时间复杂度O(N)变成O(1)，提高了加锁的效率。
 
-- 记录锁（Record Locks) ：
+  - 意向共享锁（Intention Shared Locks，IS）：当事务获取行级共享锁时需要设置意向共享锁，代表表中存在行级共享锁。
+  - 意向排它锁（Intention Exclusive Locks，IX）：当事务获取行级排它锁时需要设置意向排它锁，代表表中存在行级排它锁。
 
-- 间隙锁（Gap Locks）：
+  表级锁和意向锁的兼容性如下：
 
-- Next-Key Locks：
+  |      | X    | IX   | S    | IS   |
+  | ---- | ---- | ---- | ---- | ---- |
+  | X    | 冲突 | 冲突 | 冲突 | 冲突 |
+  | IX   | 冲突 | 兼容 | 冲突 | 兼容 |
+  | S    | 冲突 | 冲突 | 兼容 | 兼容 |
+  | IS   | 冲突 | 兼容 | 兼容 | 兼容 |
+
+  当锁兼容时事务可以获取锁，当锁不兼容时事务需要等待锁释放才能获取锁。
+
+  意向锁只会阻塞表级锁的请求，比如LOCK TABLES ... WRITE。意向锁的目的是为了标识表中已存在行级锁或正在使用行级锁。
+
+  意向锁无法通过用户手动获取和释放，只能通过系统自动操作维护。可以通过SHOW ENGINE INNODB STATUS或者InnoDB  monitor输出：
+
+  ```mysql
+  TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
+  ```
+
+- 记录锁（Record Locks) ：记录锁是对索引记录进行加锁，比如使用SELECT c1 FROM t WHERE c1=10 FOR UPDATE，就会对t.c1=10的记录加锁，其他事务无法插入，更新，删除对应的记录。记录锁总是锁定的是索引的记录，当表没有显示的指定索引时，InnoDB会默认创建一个隐藏的聚簇索引（https://dev.mysql.com/doc/refman/8.0/en/innodb-index-types.html）来作为记录锁的锁定索引。可以通过SHOW ENGINE INNODB STATUS或者InnoDB  monitor输出：
+
+  ```mysql
+  RECORD LOCKS space id 58 page no 3 n bits 72 index `PRIMARY` of table `test`.`t`
+  trx id 10078 lock_mode X locks rec but not gap
+  Record lock, heap no 2 PHYSICAL RECORD: n_fields 3; compact format; info bits 0
+   0: len 4; hex 8000000a; asc     ;;
+   1: len 6; hex 00000000274f; asc     'O;;
+   2: len 7; hex b60000019d0110; asc        ;;
+  ```
+
+- 间隙锁（Gap Locks）：间隙锁是在索引记录之间加锁，或者是在第一个索引之前以及最后一个索引之后加锁，比如使用SELECT c1  FROM t WHERE c1 BETWEEN 10 and 20 FOR UPDATE，就会对t.c1 10~20之间的记录加锁，其他事务无法在10~20之间插入数据比如15，即使当前表中没有对应的数据。
+
+  间隙锁可能跨越了单个索引值，多个索引值，甚至是空值。
+
+  间隙锁是为了平衡性能和并发的一种考虑，主要是为了避免幻读，并且只会在某些隔离级别中才会存在。（REPEATABLE-READ）
+
+  当使用唯一索引搜索唯一的记录时，并不会触发间隙锁。比如当使用SELECT * FROM t WHERE id = 100，只会使用记录锁锁定id=100的记录，至于其他事务是否在前面插入数据并不重要。但是当id不是索引或者不是唯一索引时，将会锁住id=100之前的记录。因为当id不是唯一索引时，如果不锁住间隙，其他事务可以插入其他数据，导致出现幻读。
+
+  不同的事务可以在同一个间隙内持有冲突的间隙锁，比如事务A持有gap S-lock，事务B可以在相同的间隙内持有gap X-lock。原因是当索引记录删除时需要将不同事务的gap锁合并，如果间隙锁也存在冲突的话，对于mysql的并发影响较大，毕竟间隙锁唯一的目的只是防止在间隙内插入数据，只会和插入操作有冲突，其他间隙锁没有冲突。
+
+  如果使用READ-COMMITTED隔离级别时，gap对索引和搜索禁用，只会做外键约束和重复键检查。
+
+  需要注意的是当查询的条件不存在时，gap会将查询前后的间隙锁住，比如当使用SELECT * FROM t WHERE id = 100时，如果表中无相关数据，会将查询值前后存在的记录锁住，比如99~105。如果在同一个事务中存在插入操作时，比如不存在则更新时，在高并发情况下会出现死锁，因为两个事务会锁住相同间隙，同时插入时有需要等待对方释放锁，所以会造成死锁。
+
+- Next-Key Locks：将记录锁和间隙锁结合的锁机制，锁住当前索引以及索引之前的间隙。
+
+  当表中存在索引记录10，11，13，20时，对应的next-key会锁住对应的范围：
+
+  ```
+  (negative infinity, 10]
+  (10, 11]
+  (11, 13]
+  (13, 20]
+  (20, positive infinity)
+  ```
+
+  InnoDB在REPEATABLE-READ隔离级别下，通过next-key lock来避免幻读。
+
+  可以通过SHOW ENGINE INNODB STATUS或者InnoDB  monitor输出：
+
+  ```
+  RECORD LOCKS space id 58 page no 3 n bits 72 index `PRIMARY` of table `test`.`t`
+  trx id 10080 lock_mode X
+  Record lock, heap no 1 PHYSICAL RECORD: n_fields 1; compact format; info bits 0
+   0: len 8; hex 73757072656d756d; asc supremum;;
+  
+  Record lock, heap no 2 PHYSICAL RECORD: n_fields 3; compact format; info bits 0
+   0: len 4; hex 8000000a; asc     ;;
+   1: len 6; hex 00000000274f; asc     'O;;
+   2: len 7; hex b60000019d0110; asc        ;;
+  ```
 
 - 插入意向锁（Insert Intention Locks）：
-
 - AUTO-INC Locks：
-
 - Predicate Locks for Spatial Indexs：
 
 MyISAM采用表级锁(table-level locking)，InnoDB采用行级锁(row-level locking)和表级锁，默认为行级锁。表级锁是MySQL中粒度最大的一种锁，是对当前整张表进行加锁，实现简单，资源消耗较少，加锁比较快，也不会出现死锁，但是触发锁冲突的概率最高，并发度最低。行级锁是MySQL粒度最小的一种锁，只是针对当前操作的行进行加锁，行级锁能够大大减少锁冲突的概率，并发度最高，但是加锁的开销也大，加锁也慢，容易出现死锁。InnoDB的行锁算法主要有Record lock(单行索引记录上的加锁)，Gap lock(间隙锁，锁定的一个范围内的索引记录，不包括查询的记录)和Next-key lock(record+gap，锁定一个范围内的索引记录，包括查询的记录本身)。InnoDB默认查询使用的是Next-key lock，但是在查询的是唯一索引时会将next-key lock降级为record lock，Gap间隙锁是为了阻止多个事务将记录插入同一范围，或在同一范围删除记录，防止幻读。可以在MySQL中设置事务隔离级别为RC，或者设置innodb_locks_unsafe_for_binlog为1来显示的关闭Gap锁。
