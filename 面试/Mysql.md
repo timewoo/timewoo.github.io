@@ -85,7 +85,7 @@ MySQL的InnoDB默认的事务隔离级别是可重复读，但是InnoDB实现可
   TABLE LOCK table `test`.`t` trx id 10080 lock mode IX
   ```
 
-- 记录锁（Record Locks) ：记录锁是对索引记录进行加锁，比如使用SELECT c1 FROM t WHERE c1=10 FOR UPDATE，就会对t.c1=10的记录加锁，其他事务无法插入，更新，删除对应的记录。记录锁总是锁定的是索引的记录，当表没有显示的指定索引时，InnoDB会默认创建一个隐藏的聚簇索引（https://dev.mysql.com/doc/refman/8.0/en/innodb-index-types.html）来作为记录锁的锁定索引。可以通过SHOW ENGINE INNODB STATUS或者InnoDB  monitor输出：
+- 记录锁（Record Locks) ：记录锁是对索引记录进行加锁，比如使用SELECT c1 FROM t WHERE c1=10 FOR UPDATE，就会对t.c1=10的记录加锁，其他事务无法插入，更新，删除对应的记录。记录锁总是锁定的是索引的记录，当表没有显示的指定索引时，InnoDB会默认创建一个隐藏的聚簇索引来作为记录锁的锁定索引。可以通过SHOW ENGINE INNODB STATUS或者InnoDB  monitor输出：
 
   ```mysql
   RECORD LOCKS space id 58 page no 3 n bits 72 index `PRIMARY` of table `test`.`t`
@@ -96,7 +96,7 @@ MySQL的InnoDB默认的事务隔离级别是可重复读，但是InnoDB实现可
    2: len 7; hex b60000019d0110; asc        ;;
   ```
 
-- 间隙锁（Gap Locks）：间隙锁是在索引记录之间加锁，或者是在第一个索引之前以及最后一个索引之后加锁，比如使用SELECT c1  FROM t WHERE c1 BETWEEN 10 and 20 FOR UPDATE，就会对t.c1 10~20之间的记录加锁，其他事务无法在10~20之间插入数据比如15，即使当前表中没有对应的数据。
+- 间隙锁（Gap Locks）：间隙锁是在索引记录之间加锁，或者是在第一个索引之前以及最后一个索引之后加锁，比如使用SELECT c1  FROM t WHERE c1 BETWEEN 10 and 20 FOR UPDATE，就会对t.c1 10-20之间的记录加锁，其他事务无法在10-20之间插入数据比如15，即使当前表中没有对应的数据。
 
   间隙锁可能跨越了单个索引值，多个索引值，甚至是空值。
 
