@@ -132,7 +132,6 @@ List：按照插入顺序；
 
 Set：HashSet 使用相当复杂的方法存储元素，是检索元素最快的存储方式，对顺序不重要。TreeSet 按比较结果的升序保存对象，
 LinkedHashSet 按照被添加的先后顺序保存对象。
- qq
 Map：HashMap 对顺序不重要。TreeMap 按比较结果的升序保存对象。LinkedHashMap 在保持 HashMap 查找速度的同时按键的插入顺序保存键。
 
 
