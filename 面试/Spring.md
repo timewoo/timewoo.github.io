@@ -2,24 +2,14 @@
 
 1.Spring框架：
 
-一般指的是Spring Framework，是多模块的集合，模块是核心容器，数据访问/集成，Web，AOP(面向切面编程)，工具，消息和测试模块。比如Core Container
-中的core组件是Spring所有组件的核心，Beans组件和Context组件是实现IOC和依赖注入的基础，AOP组件用来实现面向切面编程。spring的6个特征是核心技术
-(依赖注入DI，AOP，事件event，资源，i18n，验证，数据绑定，类型转换，SpEL)，测试(模拟对象，TestContext框架，Spring MVC测试，WebTestClient)，
-数据访问(事务，DAO支持，JDBC，ORM，编组XML)，Web支持(Spring MVC和Spring WebFlux Web框架)，集成(远程处理，JMS，JCA，JMX，电子邮件，任务，
-调度，缓存)，语言(Kotlin，Groovy，动态语言)。
+一般指的是Spring Framework，是多模块的集合，模块包括核心容器，数据访问/集成，Web，AOP(面向切面编程)，工具，消息和测试等模块。比如Core Container中的Core组件是Spring所有组件的核心，Beans组件和Context组件是实现IOC和依赖注入的基础，AOP组件用来实现面向切面编程。spring的6个特征是核心技术(依赖注入DI，AOP，事件event，资源，i18n，验证，数据绑定，类型转换，SpEL)，测试(模拟对象，TestContext框架，Spring MVC测试，WebTestClient)，数据访问(事务，DAO支持，JDBC，ORM，编组XML)，Web支持(Spring MVC和Spring WebFlux Web框架)，集成(远程处理，JMS，JCA，JMX，电子邮件，任务，调度，缓存)，语言(Kotlin，Groovy，动态语言)。
 
 2.Spring IOC和AOP：
 
-IOC(Inverse of control，控制反转)是一种设计思想，就是将程序手动创建对象的控制权交给Spring框架来管理，IOC在其他语言中也有，IOC容器是Spring用来实现IOC的载体，
-IOC容器实际上就是一个存放各种对象的Map。将对象之间的依赖关系交给IOC来管理，并且由IOC容器来完成对象的注入，可以简化开发的过程，IOC容器类似一个工厂，当要获取对象
-时，只需要配置文件或注解即可，不用考虑对象是如何创建的，比如最常用的用@Service注解的实现类，调用时不需要直接new实现类，直接注入实现类的接口即可使用，这样就不需要
-考虑具体的实现类，全部交给IOC容器即可。IOC在spring中具体的实现是DI，即依赖注入。IOC的初始化过程是读取XML文件形成resource资源，然后解析resource生成BeanDefinition
-即各种Bean的信息，比如指向类，是否单例，是否懒加载，bean之间的依赖关系等等。最后将BeanDefinition注册到BeanFactory中，形成IOC容器。
+IOC(Inverse of control，控制反转)是一种设计思想，就是将程序手动创建对象的控制权交给Spring框架来管理，IOC在其他语言中也有，IOC容器是Spring用来实现IOC的载体，IOC容器实际上就是一个存放各种对象的Map。将对象之间的依赖关系交给IOC来管理，并且由IOC容器来完成对象的注入，可以简化开发的过程，IOC容器类似一个工厂，当要获取对象时，只需要配置文件或注解即可，不用考虑对象是如何创建的，比如最常用的是用@Service注解的实现类，调用时不需要直接new实现类，直接注入实现类的接口即可使用，这样就不需要考虑具体的实现类，全部交给IOC容器即可。IOC在spring中具体的实现是DI，即依赖注入。IOC的初始化过程是读取XML文件形成resource资源，然后解析resource生成BeanDefinition即各种Bean的信息，比如指向类，是否单例，是否懒加载，bean之间的依赖关系等等。最后将BeanDefinition注册到BeanFactory中，形成IOC容器。
 
-AOP(Aspect-Oriented Programming，面向切面编程)是指将那些和业务无关，却为业务模块所共同调用的逻辑或责任(事务处理，日志管理，权限控制等)封装起来，减少代码的重复性，
-降低模块间的耦合，有利于未来的拓展和维护。代理就是指设置中间代理对象，通过代理对象来访问原对象，从而在不改变原对象方法的情况下提供额外的功能操作，拓展原对象，
-java中的代理实现有三种，静态代理，动态代理和cglib代理，静态代理需要原对象和代理对象实现同一个接口，代理对象在需要的拓展的方法上调用原对象的实现方法。比如
-```
+AOP(Aspect-Oriented Programming，面向切面编程)是指将那些和业务无关，却为业务模块所共同调用的逻辑或责任(事务处理，日志管理，权限控制等)封装起来，减少代码的重复性，降低模块间的耦合，有利于未来的拓展和维护。AOP的实现方式主要是通过代理，代理就是指设置中间代理对象，通过代理对象来访问原对象，从而在不改变原对象方法的情况下提供额外的功能操作，拓展原对象，java中的代理实现有三种，静态代理，动态代理和cglib代理，静态代理需要原对象和代理对象实现同一个接口，代理对象在需要的拓展的方法上调用原对象的实现方法。比如：
+```java
 public interface Subject{
     void test();
 }
@@ -54,9 +44,8 @@ public class client{
     }
 }
 ```
-第二种是动态代理，使用的是JDK自带的API，动态代理不需要和原对象实现同一接口，但是原对象必须实现接口，静态代理在编译时会生成代理类的class文件，
-动态代理是在运行时动态生成的，即在编译时没有class文件，而是在运行时才生成类字节码，并加载到JVM中。
-```
+第二种是动态代理，使用的是JDK自带的API，动态代理不需要和原对象实现同一接口，但是原对象必须实现接口，静态代理在编译时会生成代理类的class文件，动态代理是在运行时动态生成的，即在编译时没有class文件，而是在运行时才生成类字节码，并加载到JVM中。
+```java
 public interface Subject{
     void test();
 }
@@ -89,28 +78,31 @@ public class client{
     public static void main(String[] args){
         Target target = new Target();
         DynamicProxy dynamicProxy = new DynamicProxy(target);
-        ClassLoader classLoader = subject.getClass().getClassLoader();
-        Subject subject1 = (Subject) Proxy.newProxyInstance(classLoader,new Class[]{Subject.class},dynamicProxy);
-        subject1.test();
+        ClassLoader classLoader = target.getClass().getClassLoader();
+        Subject subject = (Subject) Proxy.newProxyInstance(classLoader,new Class[]{Subject.class},dynamicProxy);
+        subject.test();
     }
 }
 ```
 第三种是cglib代理，需要引入额外的三方库。cglib代理的对象不需要实现任何接口，cglib主要是通过继承原对象生成子类来实现代理，所以不能代理有final修饰的对象。
-Spring AOP是基于动态代理实现的，如果要代理的对象实现了接口则使用JDK的动态代理，没有则使用cglib代理。除了Spring AOP外，还可以使用AspectJ框架在实现AOP，
-Spring AOP属于运行时增强，AspectJ属于编译时增强，Spring AOP是基于代理，AspectJ是基于字节码，Spring AOP已经集成AspectJ。
+Spring AOP是基于动态代理实现的，如果要代理的对象实现了接口则使用JDK的动态代理，没有则使用cglib代理。除了Spring AOP外，还可以使用AspectJ框架在实现AOP，Spring AOP属于运行时增强，AspectJ属于编译时增强，Spring AOP是基于代理，AspectJ是基于字节码，Spring AOP已经集成AspectJ。
 
 3.spring bean：
 
-Bean的作用域有singleton，prototype，request，session，global-session。singleton是唯一的bean实例，spring默认都是单例bean，对于所有的bean请求，只要id和该bean定义
-相匹配，则只会返回bean的同一实例。prototype是每次请求都会创建新的bean实例。request是每次http请求都会产生一个bean实例，仅在当前http request内有效。
-session是每次http请求都会产生一个bean实例，仅在当前http session内有效。global-session是指全局session作用域，仅仅在基于portlet的web应用中才有意义，
-Spring5已经没有了。Portlet是能够生成语义代码(例如：HTML)片段的小型Java Web插件。它们基于portlet容器，可以像servlet一样处理HTTP请求。但是，与 servlet 不同，
-每个 portlet 都有不同的会话。spring的singleton bean在多线程下对bean的非静态变量的写操作会出现线程安全问题，推荐将变量用ThreadLocal保存。
+Bean的作用域有singleton，prototype，request，session，global-session。
 
-@Component和@Bean区别：@Component作用于类，@Bean作用于注解。@Component通常是通过类路径扫描来自动侦测以及自动装配到spring bean容器中，也可以使用@ComponentScan
-来定义要扫描的类自动装配到spring bean容器中，@Bean只在方法中产生bean，@Bean告诉了Spring这是某个类的示例，当我需要用它的时候还给我。@Bean比@Component自定义更强，
-当引用第三方库的类需要装配到spring bean容器中时，只能通过@Bean。@Component修饰的类能够自动装配到spring bean中，@Bean修饰的方法返回的对象将自动装配到spring bean中。
-```
+singleton是唯一的bean实例，spring默认都是单例bean，对于所有的bean请求，只要id和该bean定义相匹配，则只会返回bean的同一实例。
+
+prototype是每次请求都会创建新的bean实例。
+
+request是每次http请求都会产生一个bean实例，仅在当前http request内有效。
+
+session是每次http请求都会产生一个bean实例，仅在当前http session内有效。
+
+global-session是指全局session作用域，仅仅在基于portlet的web应用中才有意义，Spring5已经没有了。Portlet是能够生成语义代码(例如：HTML)片段的小型Java Web插件。它们基于portlet容器，可以像servlet一样处理HTTP请求。但是，与 servlet 不同，每个 portlet 都有不同的会话。spring的singleton bean在多线程下对bean的非静态变量的写操作会出现线程安全问题，推荐将变量用ThreadLocal保存。
+
+@Component和@Bean区别：@Component作用于类，@Bean作用于方法。@Component通常是通过类路径扫描来自动侦测以及自动装配到spring bean容器中，也可以使用@ComponentScan来定义要扫描的类自动装配到spring bean容器中，@Bean只在方法中产生bean，@Bean告诉了Spring这是某个类的示例，当我需要用它的时候还给我。@Bean比@Component自定义更强，当引用第三方库的类需要装配到spring bean容器中时，无法通过@Component来自动扫描类，只能通过@Bean。@Component修饰的类能够自动装配到spring bean中，@Bean修饰的方法返回的对象将自动装配到spring bean中。
+```java
 @Configuration
 public class AppConfig {
     @Bean
@@ -122,30 +114,18 @@ public class AppConfig {
 ```
 除了使用@Component来声明类自动装配到spring bean中外，还可以使用@Repository，@Service，@Controller。
 
-bean的生命周期：Bean容器找到配置文件中spring bean的定义，Bean容器利用Java Reflection API创建bean的实例，如果涉及到属性值则利用set()方法设置属性值，如果bean
-实现了BeanNameAware接口则调用setBeanName()方法设置bean的名字，如果bean实现了BeanClassLoaderAware接口，则调用setBeanClassLoader()方法传入ClassLoader对象
-的实例，如果bean实现的其他Aware接口则调用对应接口的方法。如果有和加载这个bean的spring容器相关的BeanPostProcessor对象则执行postProcessBeforeInitialization()
-方法，如果bean实现了InitializingBean接口则执行afterPropertiesSet()方法，如果bean在配置文件中包含init-method属性则执行指定方法，如果有和加载这个bean的spring
-容器相关的BeanPostProcessor对象则执行postProcessAfterInitialization()方法，当要销毁bean时，如果bean实现了DisposableBean接口，执行destroy()方法，当要销毁bean
-时如果Bean在配置文件中包含destroy-method属性则执行指定方法。大致就是先实例化bean，设置属性，检查bean是否有实现Aware相关接口，有则调用接口方法，然后检查spring容器是否有
-BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处理，然后检查bean是否实现InitializingBean接口，有则执行afterPropertiesSet()方法，然后
-检查bean是否有配置自定义init-method方法，有则调用，然后检查spring容器是否有BeanPostProcessor对象，有则执行postProcessAfterInitialization()后置处理，然后注册
-必要Destruction相关回调接口，在销毁bean时检查bean是否实现DisposableBean接口，有则调用执行destroy()方法，然后检查配置文件中包含destroy-method属性则执行指定方法。
-
-bean的实例化和初始化和JVM中定义的类的初始化和实例化不同，在JVM中定义的类加载时，会先进行类的初始化，即执行类的静态代码块以及对静态变量赋值，然后使用时才会对类进行
-实例化，即执行构造函数和对成员变量赋值，因此类的实例化需要在初始化之后。而Spring bean的实例化是创建bean对象，执行类的加载，实例化完成后就会对bean进行依赖注入，
-注入完成后就会调用bean的初始化方法（前置后置处理器，init方法等），因此bean的实例化实际是包含类的初始化。bean的执行顺序先实例化（JVM类加载，一直执行到类的初始化），
-在注入属性值和依赖，最后执行bean的初始化方法。
+Bean的生命周期：Bean容器首先会在配置文件中找到spring bean的定义，Bean容器利用Java Reflection API创建bean的实例，如果涉及到属性值则利用set()方法设置属性值，如果bean实现了BeanNameAware接口则调用setBeanName()方法设置bean的名字，如果bean实现了BeanClassLoaderAware接口，则调用setBeanClassLoader()方法传入ClassLoader对象的实例，如果bean实现的其他Aware接口则调用对应接口的方法。如果有和加载这个bean的spring容器相关的BeanPostProcessor对象则执行postProcessBeforeInitialization()方法，如果bean实现了InitializingBean接口则执行afterPropertiesSet()方法，如果bean在配置文件中包含init-method属性则执行指定方法，如果有和加载这个bean的spring容器相关的BeanPostProcessor对象则执行postProcessAfterInitialization()方法。当要销毁bean时，如果bean实现了DisposableBean接口，执行destroy()方法，当要销毁bean时如果Bean在配置文件中包含destroy-method属性则执行指定方法。
 
 ![timewoo](https://timewoo.github.io/images/Bean.jpg)
 
+大致就是先实例化bean，设置属性，检查bean是否有实现Aware相关接口，有则调用接口方法，然后检查spring容器是否有BeanPostProcessor对象，有则执行postProcessBeforeInitialization()前置处理，然后检查bean是否实现InitializingBean接口，有则执行afterPropertiesSet()方法，然后检查bean是否有配置自定义init-method方法，有则调用，然后检查spring容器是否有BeanPostProcessor对象，有则执行postProcessAfterInitialization()后置处理，然后注册必要Destruction相关回调接口，在销毁bean时检查bean是否实现DisposableBean接口，有则调用执行destroy()方法，然后检查配置文件中包含destroy-method属性则执行指定方法。
+
 ![timewoo](https://timewoo.github.io/images/Bean1.jpg)
 
-在Spring 2.5以后，有三种形式去控制Bean的生命周期中的初始化和销毁，实现 InitializingBean 和 DisposableBean的回调方法，自定义init()和destroy()方法，
-@PostConstruct 和 @PreDestroy注解。在一个bean的生命周期中可以同时使用三种形式，在初始化和销毁时首先会去调用@PostConstruct 和 @PreDestroy注解的方法，
-其次是InitializingBean的afterPropertiesSet()方法和DisposableBean的destroy()方法，最后调用自定义的init()和destroy()方法。Spring源码中是在填充属性
-（populateBean）之后的初始化方法（initializeBean）之后去执行。
-```
+Bean的实例化、初始化和JVM中定义的类的初始化、实例化不同，在JVM中定义的类加载时，会先进行类的初始化，即执行类的静态代码块以及对静态变量赋值，然后使用时才会对类进行实例化，即执行构造函数和对成员变量赋值，因此类的实例化需要在初始化之后。而Spring bean的实例化是创建bean对象，执行类的加载，实例化完成后就会对bean进行依赖注入，注入完成后就会调用bean的初始化方法（前置后置处理器，init方法等），因此bean的实例化实际是包含类的初始化。bean的执行顺序先实例化（JVM类加载，一直执行到类的初始化），在注入属性值和依赖，最后执行bean的初始化方法。
+
+在Spring 2.5以后，有三种形式去控制Bean的生命周期中的初始化和销毁，实现 InitializingBean 和 DisposableBean的回调方法，自定义init()和destroy()方法，@PostConstruct 和 @PreDestroy注解。在一个bean的生命周期中可以同时使用三种形式，在初始化和销毁时首先会去调用@PostConstruct 和 @PreDestroy注解的方法，其次是InitializingBean的afterPropertiesSet()方法和DisposableBean的destroy()方法，最后调用自定义的init()和destroy()方法。Spring源码中是在填充属性（populateBean）之后的初始化方法（initializeBean）之后去执行。
+```java
 /**
  * 初始化bean
  */
@@ -229,9 +209,8 @@ public void invokeInitMethods(Object target, String beanName) throws Throwable {
 }
 ```
 
-IOC容器在所有的bean初始化完成之后以及销毁所有bean完成后会进行相关Lifecycle接口的回调，可以自定义实现Lifecycle接口的类在IOC容器启动和停止时进行自定义处理，
-比如在Spring启动后配置后台程序（对MQ的轮询操作等）。
-```
+IOC容器在所有的bean初始化完成之后以及销毁所有bean完成后会进行相关Lifecycle接口的回调，可以自定义实现Lifecycle接口的类在IOC容器启动和停止时进行自定义处理，比如在Spring启动后配置后台程序（对MQ的轮询操作等）。
+```java
 public interface Lifecycle {
 	/**
 	 * 启动回调
@@ -253,7 +232,7 @@ public interface Lifecycle {
 }
 ```
 Lifecycle的实现类只有在IOC容器显示的调用start()和stop()方法时才会调用相关回调，所以Spring提供了LifecycleProcessor。
-```
+```java
 public interface LifecycleProcessor extends Lifecycle {
 
 	/**
@@ -267,10 +246,8 @@ public interface LifecycleProcessor extends Lifecycle {
 	void onClose();
 }
 ```
-Spring在没有显示配置lifecycleProcessor时默认使用的是DefaultLifecycleProcessor实现类，在applicationContext调用start()和stop()方法时，
-DefaultLifecycleProcessor会获取Lifecycle接口的所有实现类，判断实现类的isRunning()来判断是否调用对应回调，当applicationContext调用refresh()
-和close()方法时，DefaultLifecycleProcessor在refresh时会判断只有SmartLifecycle实现类并且设置自动启动的才会执行start()回调。
-```
+Spring在没有显示配置lifecycleProcessor时默认使用的是DefaultLifecycleProcessor实现类，在applicationContext调用start()和stop()方法时，DefaultLifecycleProcessor会获取Lifecycle接口的所有实现类，判断实现类的isRunning()来判断是否调用对应回调，当applicationContext调用refresh()和close()方法时，DefaultLifecycleProcessor在refresh时会判断只有SmartLifecycle实现类并且设置自动启动的才会执行start()回调。
+```java
 public void onRefresh() {
     startBeans(true);
     this.running = true;
@@ -301,9 +278,8 @@ private void startBeans(boolean autoStartupOnly) {
     }
 }
 ```
-如果想在refresh时调用start()方法，一种是自定义lifecycleProcessor的实现类并且设置bean的id为lifecycleProcessor来替换默认的DefaultLifecycleProcessor
-逻辑。另一种方法是实现SmartLifecycle接口。
-```
+如果想在refresh时调用start()方法，一种是自定义lifecycleProcessor的实现类并且设置bean的id为lifecycleProcessor来替换默认的DefaultLifecycleProcessor逻辑。另一种方法是实现SmartLifecycle接口。
+```java
 public interface SmartLifecycle extends Lifecycle, Phased {
 	/**
 	 * 调用顺序
@@ -337,11 +313,8 @@ public interface SmartLifecycle extends Lifecycle, Phased {
 	}
 }
 ```
-SmartLifecycle接口的Phase值表示实现的类的执行顺序，当SmartLifecycle实现类有多个时可以根据Phase值的大小来控制执行的顺序。IOC启动时根据Phase的
-值正序调用，IOC停止时根据Phase的值倒序调用。其他Lifecycle接口的实现类Phase默认值是0。SmartLifecycle实现类的stop(Runnable callback)能够进行一些
-异步服务的启动和调用，默认的DefaultLifecycleProcessor在调用stop()方法时判断是否是SmartLifecycle实现类，是则调用实现类的stop(Runnable callback)
-方法，同时通过CountDownLatch来等待stop()调用成功，默认是等待30s超时后继续执行，可以修改超时时间。
-```
+SmartLifecycle接口的Phase值表示实现的类的执行顺序，当SmartLifecycle实现类有多个时可以根据Phase值的大小来控制执行的顺序。IOC启动时根据Phase的值正序调用，IOC停止时根据Phase的值倒序调用。其他Lifecycle接口的实现类Phase默认值是0。SmartLifecycle实现类的stop(Runnable callback)能够进行一些异步服务的启动和调用，默认的DefaultLifecycleProcessor在调用stop()方法时判断是否是SmartLifecycle实现类，是则调用实现类的stop(Runnable callback)方法，同时通过CountDownLatch来等待stop()调用成功，默认是等待30s超时后继续执行，可以修改超时时间。
+```java
 public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactoryAware {
 		public void stop() {
 			if (this.members.isEmpty()) {
@@ -435,23 +408,12 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 }
 ```
 
-
-BeanFactory和ApplicationContext：BeanFactory和ApplicationContext是Spring的两个IOC容器，BeanFactory是最基础的，而ApplicationContext是在
-BeanFactory的基础上实现了其他功能。BeanFactory在加载Bean时使用的是Lazy Loading，在XML文件中配置了Bean，并且通过new BeanFactory(xml)加载xml配置时，
-只有BeanFactory进行了初始化，xml中的Bean还未加载，只有通过BeanFactory.getBean(BeanName)时才会加载相应的Bean，所以BeanFactory加载Bean时是Lazy Loading，
-只在需要时才加载Bean。ApplicationContext加载Bean时使用的是Eager Loading，ApplicationContext在加载XML文件时会将配置Bean同时进行加载。ApplicationContext
-相比较BeanFactory来说是比较重的IOC容器，因为ApplicationContext会将XML配置的所有Bean进行加载，而BeanFactory可以指定加载部分Bean，在内存有限的环境中比较方便。
-ApplicationContext在BeanFactory的基础上增加了一些其他功能，包括消息传递(i18n或国际化)，事件发布，基于注解的依赖注入和Spring AOP的集成等，同时ApplicationContext
-支持几乎所有的Bean类型的作用域，但是BeanFactory只支持Singleton和Prototype两种类型的Bean，所以尽管BeanFactory可以指定加载Bean，对内存更友好，但是一般
-还是选择ApplicationContext，能够使用更多的功能。在Bean的生命周期中，需要注册BeanFactoryPostProcessor和BeanPostProcessor，BeanFactoryPostProcessor
-主要是管理beanFactory内的BeanDefinition(未实例化)数据，可以在为实例化前修改bean的属性。BeanPostProcessor主要是对实例化的bean进行初始化方法的前后进行自定义
-的逻辑处理，postProcessBeforeInitialization和postProcessAfterInitialization。由于BeanFactory是手动加载Bean，所以无法自动注册BeanFactoryPostProcessor
-和BeanPostProcessor，需要手动创建BeanFactoryPostProcessor和BeanPostProcessor来调用相关方法。而ApplicationContext在会自动注册BeanFactoryPostProcessor
-和BeanPostProcessor，在加载bean时自动调用相关方法。同时在使用BeanFactory时，AOP和事务都不会生效。因此在一般使用ApplicationContext，只有在需要严格
+BeanFactory和ApplicationContext：BeanFactory和ApplicationContext是Spring的两个IOC容器，BeanFactory是最基础的，而ApplicationContext是在BeanFactory的基础上实现了其他功能。BeanFactory在加载Bean时使用的是Lazy Loading，在XML文件中配置了Bean，并且通过new BeanFactory(xml)加载xml配置时，只有BeanFactory进行了初始化，xml中的Bean还未加载，只有通过BeanFactory.getBean(BeanName)时才会加载相应的Bean，所以BeanFactory加载Bean时是Lazy Loading，只在需要时才加载Bean。ApplicationContext加载Bean时使用的是Eager Loading，ApplicationContext在加载XML文件时会将配置Bean同时进行加载。ApplicationContext相比较BeanFactory来说是比较重的IOC容器，因为ApplicationContext会将XML配置的所有Bean进行加载，而BeanFactory可以指定加载部分Bean，在内存有限的环境中比较方便。
+ApplicationContext在BeanFactory的基础上增加了一些其他功能，包括消息传递(i18n或国际化)，事件发布，基于注解的依赖注入和Spring AOP的集成等，同时ApplicationContext支持几乎所有的Bean类型的作用域，但是BeanFactory只支持Singleton和Prototype两种类型的Bean，所以尽管BeanFactory可以指定加载Bean，对内存更友好，但是一般还是选择ApplicationContext，能够使用更多的功能。在Bean的生命周期中，需要注册BeanFactoryPostProcessor和BeanPostProcessor，BeanFactoryPostProcessor主要是管理beanFactory内的BeanDefinition(未实例化)数据，可以在为实例化前修改bean的属性。BeanPostProcessor主要是对实例化的bean进行初始化方法的前后进行自定义的逻辑处理，postProcessBeforeInitialization和postProcessAfterInitialization。由于BeanFactory是手动加载Bean，所以无法自动注册BeanFactoryPostProcessor和BeanPostProcessor，需要手动创建BeanFactoryPostProcessor和BeanPostProcessor来调用相关方法。而ApplicationContext会自动注册BeanFactoryPostProcessor和BeanPostProcessor，在加载bean时自动调用相关方法。同时在使用BeanFactory时，AOP和事务都不会生效。因此在一般使用ApplicationContext，只有在需要严格
 控制内存的情况下才使用BeanFactory。
 
 Spring循环依赖问题：Spring循环依赖是指Bean之间循环引用，多个bean之间互相持有对方，形成闭环。A依赖B，B依赖C，C依赖A等。
-```
+```java
 public A{
     private B b;
 }
@@ -462,12 +424,8 @@ public C{
     private A a;
 }
 ```
-在Spring中Bean的注入有两种方式，构造器注入，属性注入，属性注入又分为单例和非单例，通过构造器注入的Bean在发生循环依赖时会抛出异常。Spring中通过构造器注入bean时，
-会维护一个正在创建的Bean池(Set结构存储的bean的name，singletonsCurrentlyInCreation)，存储的都是正在创建而未创建完成的bean，bean创建完成后就会从bean池中清除，
-当出现循环依赖时Spring会发现注入的bean出现在Bean池中，代表依赖的bean也在创建，就会抛出BeanCurrentlylnCreationException异常，可以通过在构造方法的bean参数前添加@Lazy注解，
-指明bean是懒加载，这样在构造时注入的是bean的代理对象，只有在真正使用时才通过代理对象调用真正的bean对象。当采用属性注入bean时，比如@setter，由于spring中bean是先实例化，
-再进行属性的设置，所以spring对属性注入的bean采用三级缓存的方式来存储bean对象用来解决循环依赖问题。
-```
+在Spring中Bean的注入有两种方式，构造器注入，属性注入，属性注入又分为单例和非单例，通过构造器注入的Bean在发生循环依赖时会抛出异常。Spring中通过构造器注入bean时，会维护一个正在创建的Bean池(Set结构存储的bean的name，singletonsCurrentlyInCreation)，存储的都是正在创建而未创建完成的bean，bean创建完成后就会从bean池中清除，当出现循环依赖时Spring会发现注入的bean出现在Bean池中，代表依赖的bean也在创建，就会抛出BeanCurrentlylnCreationException异常，可以通过在构造方法的bean参数前添加@Lazy注解，指明bean是懒加载，这样在构造时注入的是bean的代理对象，只有在真正使用时才通过代理对象调用真正的bean对象。当采用属性注入bean时，比如@setter，由于spring中bean是先实例化，再进行属性的设置，所以spring对属性注入的bean采用三级缓存的方式来存储bean对象用来解决循环依赖问题。
+```java
 /**
  * 一级缓存，存储的是完成初始化的bean
  */
@@ -484,24 +442,9 @@ private final Map<String, Object> earlySingletonObjects = new HashMap<String, Ob
 private final Map<String, ObjectFactory> singletonFactories = new HashMap<String, ObjectFactory>(16);
 
 ```
-spring对属性注入的bean先去一级缓存中获取，一级缓存没有就去二级缓存，二级缓存也没有就去三级缓存，比如A，B互相依赖，A在实例化时就会放入三级缓存中，在注入B时会去进行
-B的创建，B在实例化后也会放入三级缓存中，然后B设置A依赖时发现一级和二级缓存都没有，就去三级缓存中获取，就拿到了A已经实例化还未初始化的对象，然后将A从三级缓存放入二级缓存，
-并且删除三级缓存的A对象，B初始化完成后就将B对象放入一级缓存中，然后A在一级缓存中获取B对象，初始化完成后将A对象放入一级缓存中。其实我们可以看到，如果只使用两个缓存其实
-也是可以解决循环依赖问题(只缓存实例化和初始化的bean)，但是spring采用三级缓存目的是防止在AOP的情况下导致注入的bean不是单例，意思就是在AOP的情况下，A创建生成的应该是代理对象，
-即注入的应该是代理对象，但是A的代理对象是在bean创建完成后通过后置处理器生成的，如果只有二级缓存，B在获取A时拿到的是原始对象，A完成初始化后才生成代理对象，就违反了spring的设计，
-所以新增一个三级缓存，存储的是beanFactory，在获取三级缓存的对象时会调用后置处理器，这样拿到的就是代理对象。三级缓存主要是针对AOP下的bean注入。
-非单例bean在每次请求都会生成新的bean，无法使用三级缓存，所以无法解决循环依赖问题。
+spring对属性注入的bean先去一级缓存中获取，一级缓存没有就去二级缓存，二级缓存也没有就去三级缓存，比如A，B互相依赖，A在实例化时就会放入三级缓存中，在注入B时会去进行B的创建，B在实例化后也会放入三级缓存中，然后B设置A依赖时发现一级和二级缓存都没有，就去三级缓存中获取，就拿到了A已经实例化还未初始化的对象，然后将A从三级缓存放入二级缓存，并且删除三级缓存的A对象，B初始化完成后就将B对象放入一级缓存中，然后A在一级缓存中获取B对象，初始化完成后将A对象放入一级缓存中。其实我们可以看到，如果只使用两个缓存其实也是可以解决循环依赖问题(只缓存实例化和初始化的bean)，但是spring采用三级缓存目的是防止在AOP的情况下导致注入的bean不是单例，意思就是在AOP的情况下，A创建生成的应该是代理对象，即注入的应该是代理对象，但是A的代理对象是在bean创建完成后通过后置处理器生成的，如果只有二级缓存，B在获取A时拿到的是原始对象，A完成初始化后才生成代理对象，就违反了spring的设计，所以新增一个三级缓存，存储的是beanFactory，在获取三级缓存的对象时会调用后置处理器，这样拿到的就是代理对象。三级缓存主要是针对AOP下的bean注入。非单例bean在每次请求都会生成新的bean，无法使用三级缓存，所以无法解决循环依赖问题。
 
-spring注入的@Resource和@Autowired的区别:@Resource和@Autowired都可以用来注入bean，@Resource是javaEE自带的注解，可以设置根据bean的name或type去注入，
-name是指bean的名字，默认是参数名，type是bean的class类型。默认是根据bean的name注入，@Resource首先会根据bean的name去IOC容器中获取bean，如果没有找到指定name
-的bean，就会使用type去匹配，当匹配不到或者匹配到多个type的bean，需要注意@Resource的type匹配时会使用向下匹配，即会将type的子类或者实现都匹配出来，如果type是父类或者接口，
-则会将子类或者实现的bean也匹配出来，会抛出异常。使用向下匹配是java多态，因为向下匹配可以在注入抽象类或接口时可以使用指定的子类或实现，如果根据name匹配到bean并且指定了type的类型，
-则会判断匹配的bean的type是否和指定type匹配，如果匹配则注入的是bean的type，指定的type可以向下兼容，即bean的type为指定type的子类也可以匹配，否则将匹配到的bean的类型转化为
-指定的type类型，如果不能转化就会抛出异常。@Resource在注入时如果只设置type则会根据参数名作为bean的name去匹配，如果匹配到则会将bean的type和指定的type进行转化，所以指定了type
-还是会先根据name去匹配。@Autowired是spring提供的注解，根据bean的type注入。@Autowired首先会根据bean的type进行匹配，若没有找到则抛出异常，若找到多个则根据参数名作为bean的name去匹配，
-如果没有匹配到则抛出异常。@Autowired的type匹配会向下兼容，即会将type的子类和实现都匹配出来。@Autowired和@Resource的注入匹配是相反的，由于@Autowried没有指定bean的name的参数，
-所以单独的@Autowried只能使用参数名作为name匹配，通过@Qualifier可以使用自定义的name来匹配。在注入有继承的父类或实现的接口时，若参数名和父类以及子类(接口和实现)的bean的name不匹配
-则会注入失败，因为@Autowired的type匹配向下兼容，会将父类和子类(接口和实现)都匹配，需要指定bean的name，否则会抛出异常。
+spring注入的@Resource和@Autowired的区别:@Resource和@Autowired都可以用来注入bean，@Resource是javaEE自带的注解，可以设置根据bean的name或type去注入，name是指bean的名字，默认是参数名，type是bean的class类型。默认是根据bean的name注入，@Resource首先会根据bean的name去IOC容器中获取bean，如果没有找到指定name的bean，就会使用type去匹配，当匹配不到或者匹配到多个type的bean，需要注意@Resource的type匹配时会使用向下匹配，即会将type的子类或者实现都匹配出来，如果type是父类或者接口，则会将子类或者实现的bean也匹配出来，会抛出异常。使用向下匹配是java多态，因为向下匹配可以在注入抽象类或接口时可以使用指定的子类或实现，如果根据name匹配到bean并且指定了type的类型，则会判断匹配的bean的type是否和指定type匹配，如果匹配则注入的是bean的type，指定的type可以向下兼容，即bean的type为指定type的子类也可以匹配，否则将匹配到的bean的类型转化为指定的type类型，如果不能转化就会抛出异常。@Resource在注入时如果只设置type则会根据参数名作为bean的name去匹配，如果匹配到则会将bean的type和指定的type进行转化，所以指定了type还是会先根据name去匹配。@Autowired是spring提供的注解，根据bean的type注入。@Autowired首先会根据bean的type进行匹配，若没有找到则抛出异常，若找到多个则根据参数名作为bean的name去匹配，如果没有匹配到则抛出异常。@Autowired的type匹配会向下兼容，即会将type的子类和实现都匹配出来。@Autowired和@Resource的注入匹配是相反的，由于@Autowried没有指定bean的name的参数，所以单独的@Autowried只能使用参数名作为name匹配，通过@Qualifier可以使用自定义的name来匹配。在注入有继承的父类或实现的接口时，若参数名和父类以及子类(接口和实现)的bean的name不匹配则会注入失败，因为@Autowired的type匹配向下兼容，会将父类和子类(接口和实现)都匹配，需要指定bean的name，否则会抛出异常。
 
 4.spring mvc：
 
