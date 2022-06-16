@@ -2,8 +2,10 @@
 ## Redis数据存储类型
 redis不只是存储简单的key-value类型的数据，同时支持多种不同的数据类型。在传统key-value的存储结构中，主要是存储string类型的key-value，在redis中
 value不仅仅支持简单的string类型，同时支持复杂数据结构。redis的value主要支持下面的几种数据类型：  
-- string：二进制安全的string类型
-- List：根据插入元素的顺序排序的字符串集合，基本上是链表的数据结构
+- String：二进制安全的String类型，可以支持存储图片和序列化的Ruby对象，最多支持512M大小的数据。String类型支持的操作：
+  - String类型可以使用INCR指令来实现原子计数器，INCR（递增），DECR（递减），INCRBY（指定步长递增）等。
+  - String类型可以使用APPEND指令来实现追加数据。
+- List：根据插入元素的顺序排序的字符串集合，基本上是链表的数据结构，所以可以在队首和队尾插入数据。最多支持2^31-1个元素，
 - Set：唯一的，没有排序的string类型集合
 - Sorted Set：和Set的类型相似，但是每一个string元素都关联了一个float类型的数字，称为sort。元素根据sort值进行排序，因此Sort Set可以获取范围内的元素，比如前10个或后10个元素  
 - Hash：key和value都是string类型的map，类似Ruby或者Python的hash
