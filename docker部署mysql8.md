@@ -1,4 +1,4 @@
-﻿## docker部署mysql8(centos7)
+## docker部署mysql8(centos7)
 记录自己在centos7上部署mysql8的步骤，主要熟悉docker的安装命令和mysql8的新特性
 ### docker部署
 
