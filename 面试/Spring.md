@@ -84,7 +84,7 @@ public class client{
     }
 }
 ```
-第三种是cglib代理，需要引入额外的三方库。cglib代理的对象不需要实现任何接口，cglib主要是通过继承原对象生成子类来实现代理，所以不能代理有final修饰的对象。
+第三种是cglib代理，需要引入额外的三方库。cglib代理的对象不需要实现任何接口，cglib主要是通过使用ASM（字节码增强）继承原对象生成子类来实现代理，所以不能代理有final修饰的对象。
 Spring AOP是基于动态代理实现的，如果要代理的对象实现了接口则使用JDK的动态代理，没有则使用cglib代理。除了Spring AOP外，还可以使用AspectJ框架在实现AOP，Spring AOP属于运行时增强，AspectJ属于编译时增强，Spring AOP是基于代理，AspectJ是基于字节码，Spring AOP已经集成AspectJ。
 
 3.spring bean：
