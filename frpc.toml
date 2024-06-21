@@ -2,13 +2,13 @@ serverAddr = "43.154.139.81"
 serverPort = 7050
 
 [auth]
-token = "frp3.141592654"
+token = "xxx"
 
 [[visitors]]
 name = "rdp_visitor_tcp"
 type = "stcp"
 serverName = "rdb_tcp"
-secretKey = "stcp3.141592654"
+secretKey = "xxx"
 bindAddr = "127.0.0.1"
 bindPort = 6000
 
@@ -16,6 +16,6 @@ bindPort = 6000
 name = "rdp_visitor_udp"
 type = "sudp"
 serverName = "rdb_udp"
-secretKey = "stcp3.141592654"
+secretKey = "xxx"
 bindAddr = "127.0.0.1"
 bindPort = 6000
