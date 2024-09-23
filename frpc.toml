@@ -1,0 +1,21 @@
+serverAddr = "43.154.139.81"
+serverPort = 7050
+
+[auth]
+token = "xxx"
+
+[[visitors]]
+name = "rdp_visitor_tcp"
+type = "stcp"
+serverName = "rdb_tcp"
+secretKey = "xxx"
+bindAddr = "127.0.0.1"
+bindPort = 6000
+
+[[visitors]]
+name = "rdp_visitor_udp"
+type = "sudp"
+serverName = "rdb_udp"
+secretKey = "xxx"
+bindAddr = "127.0.0.1"
+bindPort = 6000
